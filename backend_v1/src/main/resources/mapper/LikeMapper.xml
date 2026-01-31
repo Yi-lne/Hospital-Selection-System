@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.HospitalSelection.mapper.LikeMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.chen.HospitalSelection.model.Like">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="target_type" property="targetType"/>
+        <result column="target_id" property="targetId"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        id, user_id, target_type, target_id, is_deleted, create_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_like
+        WHERE id = #{id}
+    </select>
+
+    <!-- 查询用户是否点赞某目标 -->
+    <select id="selectByUserAndTarget" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_like
+        WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId} AND is_deleted = 0
+    </select>
+
+    <!-- 检查是否已点赞 -->
+    <select id="exists" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0
+        FROM community_like
+        WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId} AND is_deleted = 0
+    </select>
+
+    <!-- 根据用户ID查询点赞记录 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_like
+        WHERE user_id = #{userId} AND is_deleted = 0
+        ORDER BY create_time DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 根据目标查询点赞列表 -->
+    <select id="selectByTarget" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_like
+        WHERE target_type = #{targetType} AND target_id = #{targetId} AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 统计目标的点赞数 -->
+    <select id="countByTarget" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM community_like
+        WHERE target_type = #{targetType} AND target_id = #{targetId} AND is_deleted = 0
+    </select>
+
+    <!-- 统计用户的点赞数 -->
+    <select id="countByUserId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM community_like
+        WHERE user_id = #{userId} AND is_deleted = 0
+    </select>
+
+    <!-- 批量查询点赞状态 -->
+    <select id="batchCheckLikes" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_like
+        WHERE user_id = #{userId} AND target_type = #{targetType}
+        AND target_id IN
+        <foreach collection="targetIds" item="targetId" open="(" separator="," close=")">
+            #{targetId}
+        </foreach>
+        AND is_deleted = 0
+    </select>
+
+    <!-- 插入点赞记录 -->
+    <insert id="insert" parameterType="com.chen.HospitalSelection.model.Like" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO community_like (user_id, target_type, target_id, is_deleted, create_time)
+        VALUES (#{userId}, #{targetType}, #{targetId}, #{isDeleted}, #{createTime})
+    </insert>
+
+    <!-- 取消点赞（逻辑删除） -->
+    <update id="cancelLike">
+        UPDATE community_like
+        SET is_deleted = 1
+        WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId}
+    </update>
+
+    <!-- 重新点赞（取消逻辑删除） -->
+    <update id="relike">
+        UPDATE community_like
+        SET is_deleted = 0
+        WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId}
+    </update>
+
+    <!-- 切换点赞状态 -->
+    <update id="toggleLike">
+        UPDATE community_like
+        SET is_deleted = ABS(is_deleted - 1)
+        WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId}
+    </update>
+
+    <!-- 删除点赞记录 -->
+    <delete id="deleteById">
+        DELETE FROM community_like
+        WHERE id = #{id}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="deleteBatch">
+        DELETE FROM community_like
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 删除目标的所有点赞记录 -->
+    <delete id="deleteByTarget">
+        DELETE FROM community_like
+        WHERE target_type = #{targetType} AND target_id = #{targetId}
+    </delete>
+
+</mapper>

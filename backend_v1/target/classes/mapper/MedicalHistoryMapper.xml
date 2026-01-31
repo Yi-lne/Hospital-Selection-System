@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.HospitalSelection.mapper.MedicalHistoryMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.chen.HospitalSelection.model.MedicalHistory">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="disease_name" property="diseaseName"/>
+        <result column="diagnosis_date" property="diagnosisDate"/>
+        <result column="status" property="status"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        id, user_id, disease_name, diagnosis_date, status, is_deleted, create_time, update_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_medical_history
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <!-- 根据用户ID查询病史列表 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_medical_history
+        WHERE user_id = #{userId} AND is_deleted = 0
+        ORDER BY diagnosis_date DESC, create_time DESC
+    </select>
+
+    <!-- 根据用户ID和状态查询 -->
+    <select id="selectByUserIdAndStatus" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_medical_history
+        WHERE user_id = #{userId} AND status = #{status} AND is_deleted = 0
+        ORDER BY diagnosis_date DESC, create_time DESC
+    </select>
+
+    <!-- 根据疾病名称查询 -->
+    <select id="selectByDiseaseName" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_medical_history
+        WHERE user_id = #{userId} AND disease_name = #{diseaseName} AND is_deleted = 0
+        ORDER BY diagnosis_date DESC
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_medical_history
+        <where>
+            is_deleted = 0
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="diseaseName != null and diseaseName != ''">
+                AND disease_name LIKE CONCAT('%', #{diseaseName}, '%')
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="startDate != null">
+                AND diagnosis_date &gt;= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND diagnosis_date &lt;= #{endDate}
+            </if>
+        </where>
+        ORDER BY diagnosis_date DESC, create_time DESC
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="selectByPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_medical_history
+        WHERE user_id = #{userId} AND is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND disease_name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY diagnosis_date DESC, create_time DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 统计用户的病史数量 -->
+    <select id="countByUserId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM user_medical_history
+        WHERE user_id = #{userId} AND is_deleted = 0
+    </select>
+
+    <!-- 按状态统计数量 -->
+    <select id="countByStatus" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM user_medical_history
+        WHERE user_id = #{userId} AND status = #{status} AND is_deleted = 0
+    </select>
+
+    <!-- 查询最近的病史记录 -->
+    <select id="selectRecent" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_medical_history
+        WHERE user_id = #{userId} AND is_deleted = 0
+        ORDER BY diagnosis_date DESC, create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 统计疾病类型分布 -->
+    <select id="countByDiseaseType" resultType="java.util.Map">
+        SELECT disease_name, COUNT(*) as count
+        FROM user_medical_history
+        WHERE user_id = #{userId} AND is_deleted = 0
+        GROUP BY disease_name
+        ORDER BY count DESC
+    </select>
+
+    <!-- 插入病史记录 -->
+    <insert id="insert" parameterType="com.chen.HospitalSelection.model.MedicalHistory" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_medical_history (user_id, disease_name, diagnosis_date, status, is_deleted, create_time, update_time)
+        VALUES (#{userId}, #{diseaseName}, #{diagnosisDate}, #{status}, #{isDeleted}, #{createTime}, #{updateTime})
+    </insert>
+
+    <!-- 更新病史记录 -->
+    <update id="update" parameterType="com.chen.HospitalSelection.model.MedicalHistory">
+        UPDATE user_medical_history
+        <set>
+            <if test="diseaseName != null and diseaseName != ''">
+                disease_name = #{diseaseName},
+            </if>
+            <if test="diagnosisDate != null">
+                diagnosis_date = #{diagnosisDate},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <!-- 更新病史状态 -->
+    <update id="updateStatus">
+        UPDATE user_medical_history
+        SET status = #{status}, update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 逻辑删除 -->
+    <update id="deleteById">
+        UPDATE user_medical_history
+        SET is_deleted = 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 清空用户的所有病史 -->
+    <update id="deleteByUserId">
+        UPDATE user_medical_history
+        SET is_deleted = 1
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 批量逻辑删除 -->
+    <update id="deleteBatch">
+        UPDATE user_medical_history
+        SET is_deleted = 1
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

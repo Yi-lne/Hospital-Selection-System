@@ -1,0 +1,55 @@
+package com.chen.HospitalSelection.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
+
+/**
+ * 评论实体类
+ * 对应表：community_comment
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Comment {
+    /**
+     * 主键ID
+     */
+    private Long id;
+
+    /**
+     * 话题ID（关联community_topic.id）
+     */
+    private Long topicId;
+
+    /**
+     * 评论用户ID
+     */
+    private Long userId;
+
+    /**
+     * 父评论ID（0=一级评论，>0=回复）
+     */
+    private Long parentId;
+
+    /**
+     * 评论内容
+     */
+    private String content;
+
+    /**
+     * 点赞数
+     */
+    private Integer likeCount;
+
+    /**
+     * 逻辑删除（0=未删，1=已删）
+     */
+    private Integer isDeleted;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
+}

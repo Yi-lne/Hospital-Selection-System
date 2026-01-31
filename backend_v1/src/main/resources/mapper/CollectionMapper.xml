@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.HospitalSelection.mapper.CollectionMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.chen.HospitalSelection.model.UserCollectionItem">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="target_type" property="targetType"/>
+        <result column="target_id" property="targetId"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        id, user_id, target_type, target_id, is_deleted, create_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_collection
+        WHERE id = #{id}
+    </select>
+
+    <!-- 查询用户是否收藏某目标 -->
+    <select id="selectByUserAndTarget" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_collection
+        WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId} AND is_deleted = 0
+    </select>
+
+    <!-- 检查是否已收藏 -->
+    <select id="exists" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0
+        FROM user_collection
+        WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId} AND is_deleted = 0
+    </select>
+
+    <!-- 根据用户ID查询收藏列表 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_collection
+        WHERE user_id = #{userId} AND is_deleted = 0
+        <if test="targetType != null">
+            AND target_type = #{targetType}
+        </if>
+        ORDER BY create_time DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 根据目标查询收藏列表（哪些用户收藏了该目标） -->
+    <select id="selectByTarget" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_collection
+        WHERE target_type = #{targetType} AND target_id = #{targetId} AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 统计目标的收藏数 -->
+    <select id="countByTarget" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM user_collection
+        WHERE target_type = #{targetType} AND target_id = #{targetId} AND is_deleted = 0
+    </select>
+
+    <!-- 统计用户的收藏数 -->
+    <select id="countByUserId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM user_collection
+        WHERE user_id = #{userId} AND is_deleted = 0
+    </select>
+
+    <!-- 统计用户按类型统计收藏数 -->
+    <select id="countByUserIdAndType" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM user_collection
+        WHERE user_id = #{userId} AND target_type = #{targetType} AND is_deleted = 0
+    </select>
+
+    <!-- 批量查询收藏状态 -->
+    <select id="batchCheckCollections" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_collection
+        WHERE user_id = #{userId} AND target_type = #{targetType}
+        AND target_id IN
+        <foreach collection="targetIds" item="targetId" open="(" separator="," close=")">
+            #{targetId}
+        </foreach>
+        AND is_deleted = 0
+    </select>
+
+    <!-- 查询用户收藏的医院列表（关联查询） -->
+    <select id="selectCollectedHospitals" resultType="com.chen.HospitalSelection.model.Hospital">
+        SELECT
+            h.id, h.hospital_name, h.hospital_level, h.province_code, h.city_code, h.area_code,
+            h.address, h.phone, h.key_departments, h.medical_equipment, h.expert_team, h.intro,
+            h.rating, h.review_count, h.is_medical_insurance, h.is_deleted, h.create_time, h.update_time
+        FROM user_collection c
+        INNER JOIN hospital_info h ON c.target_id = h.id AND h.is_deleted = 0
+        WHERE c.user_id = #{userId} AND c.target_type = 1 AND c.is_deleted = 0
+        ORDER BY c.create_time DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 查询用户收藏的医生列表（关联查询） -->
+    <select id="selectCollectedDoctors" resultType="com.chen.HospitalSelection.model.Doctor">
+        SELECT
+            d.id, d.doctor_name, d.hospital_id, d.dept_id, d.title, d.specialty,
+            d.academic_background, d.schedule_time, d.consultation_fee,
+            d.rating, d.review_count, d.is_deleted, d.create_time, d.update_time
+        FROM user_collection c
+        INNER JOIN doctor_info d ON c.target_id = d.id AND d.is_deleted = 0
+        WHERE c.user_id = #{userId} AND c.target_type = 2 AND c.is_deleted = 0
+        ORDER BY c.create_time DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 查询用户收藏的话题列表（关联查询） -->
+    <select id="selectCollectedTopics" resultType="com.chen.HospitalSelection.model.Topic">
+        SELECT
+            t.id, t.user_id, t.disease_code, t.board_level1, t.board_level2, t.board_type,
+            t.title, t.content, t.like_count, t.comment_count, t.collect_count, t.view_count,
+            t.status, t.is_deleted, t.create_time, t.update_time
+        FROM user_collection c
+        INNER JOIN community_topic t ON c.target_id = t.id AND t.is_deleted = 0
+        WHERE c.user_id = #{userId} AND c.target_type = 3 AND c.is_deleted = 0
+        ORDER BY c.create_time DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 插入收藏记录 -->
+    <insert id="insert" parameterType="com.chen.HospitalSelection.model.UserCollectionItem" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_collection (user_id, target_type, target_id, is_deleted, create_time)
+        VALUES (#{userId}, #{targetType}, #{targetId}, #{isDeleted}, #{createTime})
+    </insert>
+
+    <!-- 取消收藏（逻辑删除） -->
+    <update id="cancelCollection">
+        UPDATE user_collection
+        SET is_deleted = 1
+        WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId}
+    </update>
+
+    <!-- 重新收藏（取消逻辑删除） -->
+    <update id="recollect">
+        UPDATE user_collection
+        SET is_deleted = 0
+        WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId}
+    </update>
+
+    <!-- 切换收藏状态 -->
+    <update id="toggleCollection">
+        UPDATE user_collection
+        SET is_deleted = ABS(is_deleted - 1)
+        WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId}
+    </update>
+
+    <!-- 删除收藏记录 -->
+    <delete id="deleteById">
+        DELETE FROM user_collection
+        WHERE id = #{id}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="deleteBatch">
+        DELETE FROM user_collection
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 清空用户的所有收藏 -->
+    <delete id="deleteByUserId">
+        DELETE FROM user_collection
+        WHERE user_id = #{userId}
+    </delete>
+
+</mapper>

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.HospitalSelection.mapper.DiseaseMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.chen.HospitalSelection.model.Disease">
+        <id column="id" property="id"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="disease_name" property="diseaseName"/>
+        <result column="disease_code" property="diseaseCode"/>
+        <result column="sort" property="sort"/>
+        <result column="is_deleted" property="isDeleted"/>
+    </resultMap>
+
+    <!-- 疾病分类树形结构映射（包含子分类） -->
+    <resultMap id="DiseaseTreeResultMap" type="com.chen.HospitalSelection.model.Disease" extends="BaseResultMap">
+        <collection property="children" ofType="com.chen.HospitalSelection.model.Disease" column="id" select="selectByParentId"/>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        id, parent_id, disease_name, disease_code, sort, is_deleted
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM disease_type
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <!-- 根据疾病编码查询 -->
+    <select id="selectByCode" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM disease_type
+        WHERE disease_code = #{diseaseCode} AND is_deleted = 0
+    </select>
+
+    <!-- 根据父分类ID查询子分类 -->
+    <select id="selectByParentId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM disease_type
+        WHERE parent_id = #{parentId} AND is_deleted = 0
+        ORDER BY sort DESC, id ASC
+    </select>
+
+    <!-- 查询所有一级分类 -->
+    <select id="selectRootCategories" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM disease_type
+        WHERE parent_id = 0 AND is_deleted = 0
+        ORDER BY sort DESC, id ASC
+    </select>
+
+    <!-- 查询所有疾病分类 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM disease_type
+        WHERE is_deleted = 0
+        ORDER BY parent_id ASC, sort DESC, id ASC
+    </select>
+
+    <!-- 查询疾病分类树 -->
+    <select id="selectTree" resultMap="DiseaseTreeResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM disease_type
+        WHERE parent_id = 0 AND is_deleted = 0
+        ORDER BY sort DESC, id ASC
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM disease_type
+        <where>
+            is_deleted = 0
+            <if test="diseaseName != null and diseaseName != ''">
+                AND disease_name LIKE CONCAT('%', #{diseaseName}, '%')
+            </if>
+            <if test="diseaseCode != null and diseaseCode != ''">
+                AND disease_code LIKE CONCAT('%', #{diseaseCode}, '%')
+            </if>
+            <if test="parentId != null">
+                AND parent_id = #{parentId}
+            </if>
+        </where>
+        ORDER BY sort DESC, id ASC
+    </select>
+
+    <!-- 搜索疾病分类 -->
+    <select id="searchDiseases" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM disease_type
+        WHERE is_deleted = 0 AND disease_name LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY sort DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 统计子分类数量 -->
+    <select id="countChildren" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM disease_type
+        WHERE parent_id = #{parentId} AND is_deleted = 0
+    </select>
+
+    <!-- 插入疾病分类 -->
+    <insert id="insert" parameterType="com.chen.HospitalSelection.model.Disease" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO disease_type (parent_id, disease_name, disease_code, sort, is_deleted)
+        VALUES (#{parentId}, #{diseaseName}, #{diseaseCode}, #{sort}, #{isDeleted})
+    </insert>
+
+    <!-- 更新疾病分类 -->
+    <update id="update" parameterType="com.chen.HospitalSelection.model.Disease">
+        UPDATE disease_type
+        <set>
+            <if test="parentId != null">
+                parent_id = #{parentId},
+            </if>
+            <if test="diseaseName != null and diseaseName != ''">
+                disease_name = #{diseaseName},
+            </if>
+            <if test="diseaseCode != null and diseaseCode != ''">
+                disease_code = #{diseaseCode},
+            </if>
+            <if test="sort != null">
+                sort = #{sort},
+            </if>
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <!-- 逻辑删除 -->
+    <update id="deleteById">
+        UPDATE disease_type
+        SET is_deleted = 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 批量逻辑删除 -->
+    <update id="deleteBatch">
+        UPDATE disease_type
+        SET is_deleted = 1
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

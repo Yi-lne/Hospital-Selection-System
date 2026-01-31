@@ -1,0 +1,20 @@
+-------------------------------------------------------------------------------
+Test set: com.chen.HospitalSelection.controller.UserControllerTest
+-------------------------------------------------------------------------------
+Tests run: 7, Failures: 4, Errors: 0, Skipped: 0, Time elapsed: 9.931 s <<< FAILURE! - in com.chen.HospitalSelection.controller.UserControllerTest
+testUpdatePassword_Success  Time elapsed: 0.099 s  <<< FAILURE!
+java.lang.AssertionError: Status expected:<200> but was:<403>
+	at com.chen.HospitalSelection.controller.UserControllerTest.testUpdatePassword_Success(UserControllerTest.java:146)
+
+testUpdateUserInfo_Success  Time elapsed: 0.397 s  <<< FAILURE!
+java.lang.AssertionError: Status expected:<200> but was:<403>
+	at com.chen.HospitalSelection.controller.UserControllerTest.testUpdateUserInfo_Success(UserControllerTest.java:166)
+
+testGetUserInfo_Success  Time elapsed: 0.184 s  <<< FAILURE!
+java.lang.AssertionError: Status expected:<200> but was:<403>
+	at com.chen.HospitalSelection.controller.UserControllerTest.testGetUserInfo_Success(UserControllerTest.java:185)
+
+testLogout_Success  Time elapsed: 0.082 s  <<< FAILURE!
+java.lang.AssertionError: Status expected:<200> but was:<403>
+	at com.chen.HospitalSelection.controller.UserControllerTest.testLogout_Success(UserControllerTest.java:128)
+
