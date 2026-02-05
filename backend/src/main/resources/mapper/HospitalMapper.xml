@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.HospitalSelection.mapper.HospitalMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.chen.HospitalSelection.model.Hospital">
+        <id column="id" property="id"/>
+        <result column="hospital_name" property="hospitalName"/>
+        <result column="hospital_level" property="hospitalLevel"/>
+        <result column="province_code" property="provinceCode"/>
+        <result column="city_code" property="cityCode"/>
+        <result column="area_code" property="areaCode"/>
+        <result column="address" property="address"/>
+        <result column="phone" property="phone"/>
+        <result column="key_departments" property="keyDepartments"/>
+        <result column="medical_equipment" property="medicalEquipment"/>
+        <result column="expert_team" property="expertTeam"/>
+        <result column="intro" property="intro"/>
+        <result column="rating" property="rating"/>
+        <result column="review_count" property="reviewCount"/>
+        <result column="is_medical_insurance" property="isMedicalInsurance"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 医院详细信息映射（包含地区名称） -->
+    <resultMap id="HospitalWithAreaResultMap" type="com.chen.HospitalSelection.model.Hospital" extends="BaseResultMap">
+        <result column="province_name" property="provinceName"/>
+        <result column="city_name" property="cityName"/>
+        <result column="area_name" property="areaName"/>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        id, hospital_name, hospital_level, province_code, city_code, area_code,
+        address, phone, key_departments, medical_equipment, expert_team, intro,
+        rating, review_count, is_medical_insurance, is_deleted, create_time, update_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM hospital_info
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <!-- 根据ID查询（包含地区名称） -->
+    <select id="selectWithAreaById" resultMap="HospitalWithAreaResultMap">
+        SELECT
+            h.id, h.hospital_name, h.hospital_level, h.province_code, h.city_code, h.area_code,
+            h.address, h.phone, h.key_departments, h.medical_equipment, h.expert_team, h.intro,
+            h.rating, h.review_count, h.is_medical_insurance, h.is_deleted, h.create_time, h.update_time,
+            p.name as province_name, c.name as city_name, a.name as area_name
+        FROM hospital_info h
+        LEFT JOIN area_info p ON h.province_code = p.code
+        LEFT JOIN area_info c ON h.city_code = c.code
+        LEFT JOIN area_info a ON h.area_code = a.code
+        WHERE h.id = #{id} AND h.is_deleted = 0
+    </select>
+
+    <!-- 根据医院名称查询 -->
+    <select id="selectByName" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM hospital_info
+        WHERE hospital_name = #{hospitalName} AND is_deleted = 0
+    </select>
+
+    <!-- 查询所有医院 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM hospital_info
+        WHERE is_deleted = 0
+        ORDER BY rating DESC, review_count DESC
+    </select>
+
+    <!-- 根据医院等级查询 -->
+    <select id="selectByLevel" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM hospital_info
+        WHERE hospital_level = #{hospitalLevel} AND is_deleted = 0
+        ORDER BY rating DESC
+    </select>
+
+    <!-- 根据省份查询医院 -->
+    <select id="selectByProvince" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM hospital_info
+        WHERE province_code = #{provinceCode} AND is_deleted = 0
+        ORDER BY rating DESC
+    </select>
+
+    <!-- 根据城市查询医院 -->
+    <select id="selectByCity" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM hospital_info
+        WHERE city_code = #{cityCode} AND is_deleted = 0
+        ORDER BY rating DESC
+    </select>
+
+    <!-- 根据区县查询医院 -->
+    <select id="selectByArea" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM hospital_info
+        WHERE area_code = #{areaCode} AND is_deleted = 0
+        ORDER BY rating DESC
+    </select>
+
+    <!-- 根据是否医保定点查询 -->
+    <select id="selectByMedicalInsurance" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM hospital_info
+        WHERE is_medical_insurance = #{isMedicalInsurance} AND is_deleted = 0
+        ORDER BY rating DESC
+    </select>
+
+    <!-- 模糊搜索医院 -->
+    <select id="searchByKeyword" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM hospital_info
+        WHERE is_deleted = 0
+        AND (hospital_name LIKE CONCAT('%', #{keyword}, '%')
+        OR address LIKE CONCAT('%', #{keyword}, '%')
+        OR key_departments LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY rating DESC
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM hospital_info
+        <where>
+            is_deleted = 0
+            <if test="hospitalLevel != null and hospitalLevel != ''">
+                AND hospital_level = #{hospitalLevel}
+            </if>
+            <if test="provinceCode != null and provinceCode != ''">
+                AND province_code = #{provinceCode}
+            </if>
+            <if test="cityCode != null and cityCode != ''">
+                AND city_code = #{cityCode}
+            </if>
+            <if test="areaCode != null and areaCode != ''">
+                AND area_code = #{areaCode}
+            </if>
+            <if test="isMedicalInsurance != null">
+                AND is_medical_insurance = #{isMedicalInsurance}
+            </if>
+            <if test="keyDepartments != null and keyDepartments != ''">
+                AND key_departments LIKE CONCAT('%', #{keyDepartments}, '%')
+            </if>
+        </where>
+        ORDER BY rating DESC, review_count DESC
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="selectByPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM hospital_info
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (hospital_name LIKE CONCAT('%', #{keyword}, '%')
+            OR address LIKE CONCAT('%', #{keyword}, '%')
+            OR key_departments LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="hospitalLevel != null and hospitalLevel != ''">
+            AND hospital_level = #{hospitalLevel}
+        </if>
+        <if test="cityCode != null and cityCode != ''">
+            AND city_code = #{cityCode}
+        </if>
+        <if test="minRating != null">
+            AND rating &gt;= #{minRating}
+        </if>
+        ORDER BY
+        <choose>
+            <when test="sortField == 'rating'">rating DESC</when>
+            <when test="sortField == 'reviewCount'">review_count DESC</when>
+            <otherwise>create_time DESC</otherwise>
+        </choose>
+    </select>
+
+    <!-- 统计总数 -->
+    <select id="countByCondition" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM hospital_info
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (hospital_name LIKE CONCAT('%', #{keyword}, '%')
+            OR address LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="hospitalLevel != null and hospitalLevel != ''">
+            AND hospital_level = #{hospitalLevel}
+        </if>
+        <if test="cityCode != null and cityCode != ''">
+            AND city_code = #{cityCode}
+        </if>
+    </select>
+
+    <!-- 查询热门医院（按评分和评价数排序） -->
+    <select id="selectTopHospitals" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM hospital_info
+        WHERE is_deleted = 0
+        ORDER BY rating DESC, review_count DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 按城市统计医院数量 -->
+    <select id="countByCity" resultType="java.util.Map">
+        SELECT city_code, COUNT(*) as count
+        FROM hospital_info
+        WHERE is_deleted = 0
+        GROUP BY city_code
+    </select>
+
+    <!-- 插入医院 -->
+    <insert id="insert" parameterType="com.chen.HospitalSelection.model.Hospital" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO hospital_info (
+            hospital_name, hospital_level, province_code, city_code, area_code,
+            address, phone, key_departments, medical_equipment, expert_team, intro,
+            rating, review_count, is_medical_insurance, is_deleted, create_time, update_time
+        ) VALUES (
+            #{hospitalName}, #{hospitalLevel}, #{provinceCode}, #{cityCode}, #{areaCode},
+            #{address}, #{phone}, #{keyDepartments}, #{medicalEquipment}, #{expertTeam}, #{intro},
+            #{rating}, #{reviewCount}, #{isMedicalInsurance}, #{isDeleted}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <!-- 更新医院 -->
+    <update id="update" parameterType="com.chen.HospitalSelection.model.Hospital">
+        UPDATE hospital_info
+        <set>
+            <if test="hospitalName != null and hospitalName != ''">
+                hospital_name = #{hospitalName},
+            </if>
+            <if test="hospitalLevel != null and hospitalLevel != ''">
+                hospital_level = #{hospitalLevel},
+            </if>
+            <if test="provinceCode != null and provinceCode != ''">
+                province_code = #{provinceCode},
+            </if>
+            <if test="cityCode != null and cityCode != ''">
+                city_code = #{cityCode},
+            </if>
+            <if test="areaCode != null and areaCode != ''">
+                area_code = #{areaCode},
+            </if>
+            <if test="address != null and address != ''">
+                address = #{address},
+            </if>
+            <if test="phone != null">
+                phone = #{phone},
+            </if>
+            <if test="keyDepartments != null">
+                key_departments = #{keyDepartments},
+            </if>
+            <if test="medicalEquipment != null">
+                medical_equipment = #{medicalEquipment},
+            </if>
+            <if test="expertTeam != null">
+                expert_team = #{expertTeam},
+            </if>
+            <if test="intro != null">
+                intro = #{intro},
+            </if>
+            <if test="isMedicalInsurance != null">
+                is_medical_insurance = #{isMedicalInsurance},
+            </if>
+            <if test="rating != null">
+                rating = #{rating},
+            </if>
+            <if test="reviewCount != null">
+                review_count = #{reviewCount},
+            </if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <!-- 更新医院评分 -->
+    <update id="updateRating">
+        UPDATE hospital_info
+        SET rating = #{rating}, review_count = #{reviewCount}, update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新医院信息 -->
+    <update id="updateById" parameterType="com.chen.HospitalSelection.model.Hospital">
+        UPDATE hospital_info
+        <set>
+            <if test="hospitalName != null and hospitalName != ''">
+                hospital_name = #{hospitalName},
+            </if>
+            <if test="hospitalLevel != null and hospitalLevel != ''">
+                hospital_level = #{hospitalLevel},
+            </if>
+            <if test="provinceCode != null and provinceCode != ''">
+                province_code = #{provinceCode},
+            </if>
+            <if test="cityCode != null and cityCode != ''">
+                city_code = #{cityCode},
+            </if>
+            <if test="areaCode != null and areaCode != ''">
+                area_code = #{areaCode},
+            </if>
+            <if test="address != null and address != ''">
+                address = #{address},
+            </if>
+            <if test="phone != null">
+                phone = #{phone},
+            </if>
+            <if test="keyDepartments != null">
+                key_departments = #{keyDepartments},
+            </if>
+            <if test="medicalEquipment != null">
+                medical_equipment = #{medicalEquipment},
+            </if>
+            <if test="expertTeam != null">
+                expert_team = #{expertTeam},
+            </if>
+            <if test="intro != null">
+                intro = #{intro},
+            </if>
+            <if test="isMedicalInsurance != null">
+                is_medical_insurance = #{isMedicalInsurance},
+            </if>
+            <if test="rating != null">
+                rating = #{rating},
+            </if>
+            <if test="reviewCount != null">
+                review_count = #{reviewCount},
+            </if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <!-- 增加评价数量 -->
+    <update id="incrementReviewCount">
+        UPDATE hospital_info
+        SET review_count = review_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 统计医院数量 -->
+    <select id="count" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM hospital_info
+        WHERE is_deleted = 0
+    </select>
+
+    <!-- 逻辑删除 -->
+    <update id="deleteById">
+        UPDATE hospital_info
+        SET is_deleted = 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 批量逻辑删除 -->
+    <update id="deleteBatch">
+        UPDATE hospital_info
+        SET is_deleted = 1
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

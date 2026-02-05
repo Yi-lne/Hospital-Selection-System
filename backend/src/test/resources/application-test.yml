@@ -1,0 +1,52 @@
+# 测试环境配置
+server:
+  port: 8088
+
+spring:
+  application:
+    name: hospital-selection-test
+
+  # 使用H2内存数据库进行测试
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    # 初始化数据库脚本
+    schema: classpath:schema.sql
+
+  # SQL初始化配置（Spring Boot 2.5+）
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
+
+  # Jackson配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    serialization:
+      write-dates-as-timestamps: false
+
+  # H2数据库控制台
+  h2:
+    console:
+      enabled: true
+
+# MyBatis配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.chen.HospitalSelection.model
+  configuration:
+    map-underscore-to-camel-case: true
+
+# JWT配置
+jwt:
+  secret: hospitalSelectionTestSecretKeyForJWTSigningHS512AlgorithmMustBeAtLeast512BitsOr64CharactersLong
+  expiration: 3600000  # 1小时，单位毫秒
+
+# 日志配置
+logging:
+  level:
+    com.chen.HospitalSelection: debug
+    org.springframework.test: info
