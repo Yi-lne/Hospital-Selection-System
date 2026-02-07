@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.HospitalSelection.mapper.CommentMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.chen.HospitalSelection.model.Comment">
+        <id column="id" property="id"/>
+        <result column="topic_id" property="topicId"/>
+        <result column="user_id" property="userId"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="content" property="content"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 评论详细信息映射（包含用户信息） -->
+    <resultMap id="CommentWithUserResultMap" type="com.chen.HospitalSelection.model.Comment" extends="BaseResultMap">
+        <result column="user_nickname" property="userNickname"/>
+        <result column="user_avatar" property="userAvatar"/>
+    </resultMap>
+
+    <!-- 评论树形结构映射（包含回复） -->
+    <resultMap id="CommentTreeResultMap" type="com.chen.HospitalSelection.model.Comment" extends="CommentWithUserResultMap">
+        <collection property="replies" ofType="com.chen.HospitalSelection.model.Comment" column="id" select="selectRepliesByParentId"/>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        id, topic_id, user_id, parent_id, content, like_count, is_deleted, create_time, update_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_comment
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <!-- 根据ID查询（包含用户信息） -->
+    <select id="selectWithUserById" resultMap="CommentWithUserResultMap">
+        SELECT
+            c.id, c.topic_id, c.user_id, c.parent_id, c.content, c.like_count, c.is_deleted, c.create_time,
+            u.nickname as user_nickname, u.avatar as user_avatar
+        FROM community_comment c
+        LEFT JOIN sys_user u ON c.user_id = u.id AND u.is_deleted = 0
+        WHERE c.id = #{id} AND c.is_deleted = 0
+    </select>
+
+    <!-- 根据话题ID查询所有一级评论 -->
+    <select id="selectByTopicId" resultMap="CommentWithUserResultMap">
+        SELECT
+            c.id, c.topic_id, c.user_id, c.parent_id, c.content, c.like_count, c.is_deleted, c.create_time,
+            u.nickname as user_nickname, u.avatar as user_avatar
+        FROM community_comment c
+        LEFT JOIN sys_user u ON c.user_id = u.id AND u.is_deleted = 0
+        WHERE c.topic_id = #{topicId} AND c.parent_id = 0 AND c.is_deleted = 0
+        ORDER BY c.create_time DESC
+    </select>
+
+    <!-- 根据话题ID查询一级评论 -->
+    <select id="selectTopLevelByTopicId" resultMap="CommentWithUserResultMap">
+        SELECT
+            c.id, c.topic_id, c.user_id, c.parent_id, c.content, c.like_count, c.is_deleted, c.create_time,
+            u.nickname as user_nickname, u.avatar as user_avatar
+        FROM community_comment c
+        LEFT JOIN sys_user u ON c.user_id = u.id AND u.is_deleted = 0
+        WHERE c.topic_id = #{topicId} AND c.parent_id = 0 AND c.is_deleted = 0
+        ORDER BY c.create_time DESC
+    </select>
+
+    <!-- 根据父评论ID查询回复 -->
+    <select id="selectRepliesByParentId" resultMap="CommentWithUserResultMap">
+        SELECT
+            c.id, c.topic_id, c.user_id, c.parent_id, c.content, c.like_count, c.is_deleted, c.create_time,
+            u.nickname as user_nickname, u.avatar as user_avatar
+        FROM community_comment c
+        LEFT JOIN sys_user u ON c.user_id = u.id AND u.is_deleted = 0
+        WHERE c.parent_id = #{parentId} AND c.is_deleted = 0
+        ORDER BY c.create_time ASC
+    </select>
+
+    <!-- 根据父评论ID查询回复列表 -->
+    <select id="selectByParentId" resultMap="CommentWithUserResultMap">
+        SELECT
+            c.id, c.topic_id, c.user_id, c.parent_id, c.content, c.like_count, c.is_deleted, c.create_time,
+            u.nickname as user_nickname, u.avatar as user_avatar
+        FROM community_comment c
+        LEFT JOIN sys_user u ON c.user_id = u.id AND u.is_deleted = 0
+        WHERE c.parent_id = #{parentId} AND c.is_deleted = 0
+        ORDER BY c.create_time ASC
+    </select>
+
+    <!-- 查询所有评论 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_comment
+        WHERE is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据用户ID查询评论 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_comment
+        WHERE user_id = #{userId} AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_comment
+        <where>
+            is_deleted = 0
+            <if test="topicId != null">
+                AND topic_id = #{topicId}
+            </if>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="parentId != null">
+                AND parent_id = #{parentId}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND content LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 统计话题的评论数 -->
+    <select id="countByTopicId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM community_comment
+        WHERE topic_id = #{topicId} AND is_deleted = 0
+    </select>
+
+    <!-- 统计回复数量（根据父评论ID） -->
+    <select id="countByParentId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM community_comment
+        WHERE parent_id = #{parentId} AND is_deleted = 0
+    </select>
+
+    <!-- 统计用户的评论数 -->
+    <select id="countByUserId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM community_comment
+        WHERE user_id = #{userId} AND is_deleted = 0
+    </select>
+
+    <!-- 统计一级评论数 -->
+    <select id="countRootComments" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM community_comment
+        WHERE topic_id = #{topicId} AND parent_id = 0 AND is_deleted = 0
+    </select>
+
+    <!-- 插入评论 -->
+    <insert id="insert" parameterType="com.chen.HospitalSelection.model.Comment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO community_comment (topic_id, user_id, parent_id, content, like_count, is_deleted, create_time, update_time)
+        VALUES (#{topicId}, #{userId}, #{parentId}, #{content}, #{likeCount}, #{isDeleted}, #{createTime}, #{updateTime})
+    </insert>
+
+    <!-- 更新评论 -->
+    <update id="update" parameterType="com.chen.HospitalSelection.model.Comment">
+        UPDATE community_comment
+        <set>
+            <if test="content != null and content != ''">
+                content = #{content},
+            </if>
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <!-- 更新评论 -->
+    <update id="updateById" parameterType="com.chen.HospitalSelection.model.Comment">
+        UPDATE community_comment
+        <set>
+            <if test="content != null and content != ''">
+                content = #{content},
+            </if>
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <!-- 批量逻辑删除 -->
+    <update id="batchDelete">
+        UPDATE community_comment
+        SET is_deleted = 1
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 更新点赞数 -->
+    <update id="updateLikeCount">
+        UPDATE community_comment
+        SET like_count = #{likeCount}
+        WHERE id = #{commentId}
+    </update>
+
+    <!-- 增加点赞数 -->
+    <update id="incrementLikeCount">
+        UPDATE community_comment
+        SET like_count = like_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 减少点赞数 -->
+    <update id="decrementLikeCount">
+        UPDATE community_comment
+        SET like_count = like_count - 1
+        WHERE id = #{id} AND like_count > 0
+    </update>
+
+    <!-- 逻辑删除 -->
+    <update id="deleteById">
+        UPDATE community_comment
+        SET is_deleted = 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除话题的所有评论 -->
+    <update id="deleteByTopicId">
+        UPDATE community_comment
+        SET is_deleted = 1
+        WHERE topic_id = #{topicId}
+    </update>
+
+    <!-- 批量逻辑删除（保留原有方法名兼容性） -->
+    <update id="deleteBatch">
+        UPDATE community_comment
+        SET is_deleted = 1
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>
