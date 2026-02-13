@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.HospitalSelection.mapper.QueryHistoryMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.chen.HospitalSelection.model.QueryHistory">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="query_type" property="queryType"/>
+        <result column="target_id" property="targetId"/>
+        <result column="query_params" property="queryParams"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        id, user_id, query_type, target_id, query_params, is_deleted, create_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_query_history
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <!-- 根据用户ID查询查询历史 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_query_history
+        WHERE user_id = #{userId} AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据用户ID和查询类型查询 -->
+    <select id="selectByUserIdAndType" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_query_history
+        WHERE user_id = #{userId} AND query_type = #{queryType} AND is_deleted = 0
+        ORDER BY create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 根据目标ID查询 -->
+    <select id="selectByTargetId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_query_history
+        WHERE target_id = #{targetId} AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_query_history
+        <where>
+            is_deleted = 0
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="queryType != null">
+                AND query_type = #{queryType}
+            </if>
+            <if test="targetId != null">
+                AND target_id = #{targetId}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="selectByPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_query_history
+        WHERE user_id = #{userId} AND is_deleted = 0
+        <if test="queryType != null">
+            AND query_type = #{queryType}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 统计用户的查询历史数量 -->
+    <select id="countByUserId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM user_query_history
+        WHERE user_id = #{userId} AND is_deleted = 0
+    </select>
+
+    <!-- 按查询类型统计 -->
+    <select id="countByQueryType" resultType="java.util.Map">
+        SELECT query_type, COUNT(*) as count
+        FROM user_query_history
+        WHERE user_id = #{userId} AND is_deleted = 0
+        GROUP BY query_type
+    </select>
+
+    <!-- 统计目标的查询次数 -->
+    <select id="countByTarget" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM user_query_history
+        WHERE target_id = #{targetId} AND is_deleted = 0
+    </select>
+
+    <!-- 查询最近的查询历史 -->
+    <select id="selectRecent" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_query_history
+        WHERE user_id = #{userId} AND is_deleted = 0
+        ORDER BY create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询热门查询目标 -->
+    <select id="selectPopularTargets" resultMap="BaseResultMap">
+        SELECT target_id, COUNT(*) as query_count
+        FROM user_query_history
+        WHERE query_type = #{queryType} AND is_deleted = 0
+        GROUP BY target_id
+        ORDER BY query_count DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 检查是否已存在相同的查询记录 -->
+    <select id="exists" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0
+        FROM user_query_history
+        WHERE user_id = #{userId} AND query_type = #{queryType} AND target_id = #{targetId} AND is_deleted = 0
+    </select>
+
+    <!-- 插入查询历史 -->
+    <insert id="insert" parameterType="com.chen.HospitalSelection.model.QueryHistory" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_query_history (user_id, query_type, target_id, query_params, is_deleted, create_time)
+        VALUES (#{userId}, #{queryType}, #{targetId}, #{queryParams}, #{isDeleted}, #{createTime})
+    </insert>
+
+    <!-- 保存或更新查询历史（存在则更新时间，不存在则插入） -->
+    <insert id="saveOrUpdate" parameterType="com.chen.HospitalSelection.model.QueryHistory" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_query_history (user_id, query_type, target_id, query_params, is_deleted, create_time)
+        VALUES (#{userId}, #{queryType}, #{targetId}, #{queryParams}, #{isDeleted}, #{createTime})
+        ON DUPLICATE KEY UPDATE
+        query_params = #{queryParams},
+        create_time = #{createTime}
+    </insert>
+
+    <!-- 更新查询历史 -->
+    <update id="update" parameterType="com.chen.HospitalSelection.model.QueryHistory">
+        UPDATE user_query_history
+        <set>
+            <if test="queryType != null">
+                query_type = #{queryType},
+            </if>
+            <if test="targetId != null">
+                target_id = #{targetId},
+            </if>
+            <if test="queryParams != null">
+                query_params = #{queryParams},
+            </if>
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <!-- 逻辑删除 -->
+    <update id="deleteById">
+        UPDATE user_query_history
+        SET is_deleted = 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 清空用户的所有查询历史 -->
+    <update id="deleteByUserId">
+        UPDATE user_query_history
+        SET is_deleted = 1
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 批量逻辑删除 -->
+    <update id="deleteBatch">
+        UPDATE user_query_history
+        SET is_deleted = 1
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 清理过期的查询历史 -->
+    <delete id="deleteExpired">
+        DELETE FROM user_query_history
+        WHERE create_time &lt; #{expireDate}
+    </delete>
+
+</mapper>

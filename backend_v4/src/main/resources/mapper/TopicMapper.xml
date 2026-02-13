@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.HospitalSelection.mapper.TopicMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.chen.HospitalSelection.model.Topic">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="disease_code" property="diseaseCode"/>
+        <result column="board_level1" property="boardLevel1"/>
+        <result column="board_level2" property="boardLevel2"/>
+        <result column="board_type" property="boardType"/>
+        <result column="title" property="title"/>
+        <result column="content" property="content"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="comment_count" property="commentCount"/>
+        <result column="collect_count" property="collectCount"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="status" property="status"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        id, user_id, disease_code, board_level1, board_level2, board_type,
+        title, content, like_count, comment_count, collect_count, view_count,
+        status, is_deleted, create_time, update_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_topic
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <!-- 根据用户ID查询话题 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_topic
+        WHERE user_id = #{userId} AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询所有话题 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_topic
+        WHERE is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据疾病编码查询话题列表 -->
+    <select id="selectByDiseaseCode" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_topic
+        WHERE is_deleted = 0
+        <if test="diseaseCode != null and diseaseCode != ''">
+            AND disease_code = #{diseaseCode}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 插入话题 -->
+    <insert id="insert" parameterType="com.chen.HospitalSelection.model.Topic" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO community_topic (
+            user_id, disease_code, board_level1, board_level2, board_type,
+            title, content, like_count, comment_count, collect_count, view_count,
+            status, is_deleted, create_time, update_time
+        ) VALUES (
+            #{userId}, #{diseaseCode}, #{boardLevel1}, #{boardLevel2}, #{boardType},
+            #{title}, #{content}, #{likeCount}, #{commentCount}, #{collectCount}, #{viewCount},
+            #{status}, #{isDeleted}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <!-- 更新话题 -->
+    <update id="updateById" parameterType="com.chen.HospitalSelection.model.Topic">
+        UPDATE community_topic
+        <set>
+            <if test="diseaseCode != null">
+                disease_code = #{diseaseCode},
+            </if>
+            <if test="boardLevel1 != null and boardLevel1 != ''">
+                board_level1 = #{boardLevel1},
+            </if>
+            <if test="boardLevel2 != null">
+                board_level2 = #{boardLevel2},
+            </if>
+            <if test="boardType != null">
+                board_type = #{boardType},
+            </if>
+            <if test="title != null and title != ''">
+                title = #{title},
+            </if>
+            <if test="content != null and content != ''">
+                content = #{content},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <!-- 增加浏览量 -->
+    <update id="incrementViewCount">
+        UPDATE community_topic
+        SET view_count = view_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新点赞数 -->
+    <update id="updateLikeCount">
+        UPDATE community_topic
+        SET like_count = #{likeCount}
+        WHERE id = #{topicId}
+    </update>
+
+    <!-- 更新评论数 -->
+    <update id="updateCommentCount">
+        UPDATE community_topic
+        SET comment_count = #{commentCount}
+        WHERE id = #{topicId}
+    </update>
+
+    <!-- 增加点赞数 -->
+    <update id="incrementLikeCount">
+        UPDATE community_topic
+        SET like_count = like_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 减少点赞数 -->
+    <update id="decrementLikeCount">
+        UPDATE community_topic
+        SET like_count = like_count - 1
+        WHERE id = #{id} AND like_count > 0
+    </update>
+
+    <!-- 增加评论数 -->
+    <update id="incrementCommentCount">
+        UPDATE community_topic
+        SET comment_count = comment_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 减少评论数 -->
+    <update id="decrementCommentCount">
+        UPDATE community_topic
+        SET comment_count = comment_count - 1
+        WHERE id = #{id} AND comment_count > 0
+    </update>
+
+    <!-- 增加收藏数 -->
+    <update id="incrementCollectCount">
+        UPDATE community_topic
+        SET collect_count = collect_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 减少收藏数 -->
+    <update id="decrementCollectCount">
+        UPDATE community_topic
+        SET collect_count = collect_count - 1
+        WHERE id = #{id} AND collect_count > 0
+    </update>
+
+    <!-- 根据一级板块查询话题 -->
+    <select id="selectByBoardLevel1" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_topic
+        WHERE board_level1 = #{boardLevel1} AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据二级板块查询话题 -->
+    <select id="selectByBoardLevel2" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_topic
+        WHERE board_level2 = #{boardLevel2} AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据板块类型查询话题 -->
+    <select id="selectByBoardType" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_topic
+        WHERE board_type = #{boardType} AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据状态查询话题 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_topic
+        WHERE status = #{status} AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 模糊搜索话题 -->
+    <select id="searchByKeyword" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_topic
+        WHERE is_deleted = 0
+        AND (title LIKE CONCAT('%', #{keyword}, '%')
+             OR content LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询热门话题 -->
+    <select id="selectHotTopics" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_topic
+        WHERE is_deleted = 0
+        ORDER BY (like_count * 3 + comment_count * 2 + view_count) DESC, create_time DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 查询最新话题 -->
+    <select id="selectLatestTopics" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_topic
+        WHERE is_deleted = 0
+        ORDER BY create_time DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 更新话题状态 -->
+    <update id="updateStatus">
+        UPDATE community_topic
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新收藏数 -->
+    <update id="updateCollectCount">
+        UPDATE community_topic
+        SET collect_count = #{collectCount}
+        WHERE id = #{topicId}
+    </update>
+
+    <!-- 逻辑删除 -->
+    <update id="deleteById">
+        UPDATE community_topic
+        SET is_deleted = 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 批量逻辑删除 -->
+    <update id="deleteBatch">
+        UPDATE community_topic
+        SET is_deleted = 1
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 统计话题数量 -->
+    <select id="count" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM community_topic
+        WHERE is_deleted = 0
+    </select>
+
+    <!-- 统计用户的话题数量 -->
+    <select id="countByUserId" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM community_topic
+        WHERE user_id = #{userId} AND is_deleted = 0
+    </select>
+
+</mapper>
