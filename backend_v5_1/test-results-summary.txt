@@ -1,0 +1,107 @@
+Maven Test Results Summary
+=========================
+Date: 2026-01-31 15:13:39
+Project: HospitalSelection 1.0.0
+Command: mvn clean test
+
+1. TEST STATISTICS
+------------------
+Total Tests Run:    153
+Tests Passed:       120 (153 - 7 - 26 = 120)
+Tests Failed:       7
+Tests with Errors:  26
+Tests Skipped:      0
+
+Overall Build Status: BUILD FAILURE
+
+
+2. FAILING TESTS (Assertion Failures)
+--------------------------------------
+
+Test: CommunityServiceTest.testGetTopicDetail_Success
+Location: Line 179
+Error: Verification failed for userMapper.selectById(1L)
+Expected: 1 time
+Actual: 2 times
+Invocations:
+  - at CommunityServiceImpl.getTopicDetail(CommunityServiceImpl.java:136)
+  - at CommunityServiceImpl.convertToCommentVO(CommunityServiceImpl.java:452)
+
+Test: CommunityServiceTest.testToggleCollection_Cancel
+Location: Line 381
+Error: Expected false but was true
+
+Test: DepartmentServiceTest.testGetAllDepartmentTypes_Success
+Location: Line 175
+Error: Expected 3 but was 2
+
+Test: MessageServiceTest.testSendMessage_CannotSendToSelf
+Location: Line 133
+Error: Expected message content mismatch
+
+Test: UserServiceTest.testUpdatePassword_Success
+Location: Line 284
+Error: Mock verification failed
+Wanted: userMapper.updatePassword(1L, <any string>)
+Actual: userMapper.updatePassword(1L, null)
+Difference: The password passed was null instead of a valid string
+
+
+3. TESTS WITH ERRERS (26 Errors)
+---------------------------------
+
+All controller tests failed to load ApplicationContext:
+
+CommunityControllerTest (11 tests):
+  - testAddComment_Success
+  - testDeleteTopic_Success
+  - testGetBoards_Success
+  - testGetMyTopics_Success
+  - testGetTopicDetail_Success
+  - testGetTopicList_Success
+  - testGetTopicsByBoard_Success
+  - testLikeTopic_Success
+  - testPublishTopic_Success
+  - testUnlikeTopic_Success
+  - testUpdateTopic_Success
+
+HospitalControllerTest (7 tests):
+  - testFilterHospitals_Success
+  - testGetHospitalDepartments_Success
+  - testGetHospitalDetail_Success
+  - testGetHospitalDoctors_Success
+  - testGetHospitalList_Empty
+  - testGetHospitalList_Success
+  - testSearchSuggest_Success
+
+UserControllerTest (7 tests):
+  - testGetUserInfo_Success
+  - testLogin_Success
+  - testLogout_Success
+  - testRegister_Success
+  - testRegister_ValidationFailed
+  - testUpdatePassword_Success
+  - testUpdateUserInfo_Success
+
+UserServiceTest (1 test):
+  - testLogin_Success (NullPointerException at line 133)
+
+
+4. ROOT CAUSE ANALYSIS
+----------------------
+
+Primary Issue: Failed to load ApplicationContext for controller tests
+- All @WebMvcTest based controller tests are failing
+- This suggests missing or misconfigured test dependencies
+
+Secondary Issues:
+1. CommunityServiceTest - Mock verification mismatch (selectById called twice)
+2. CommunityServiceTest - Toggle collection logic returns unexpected value
+3. DepartmentServiceTest - Department type count mismatch
+4. MessageServiceTest - Error message content mismatch
+5. UserServiceTest - Password update receiving null instead of encrypted password
+
+
+5. DETAILED REPORTS LOCATION
+-----------------------------
+Individual test results: D:\Projects\Software_Project\Hospital-Selection-System\backend\target\surefire-reports
