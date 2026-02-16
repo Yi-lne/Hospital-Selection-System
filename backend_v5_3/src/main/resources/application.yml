@@ -1,0 +1,70 @@
+server:
+  port: 8088
+
+
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: hospital-selection
+
+  # 数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:jdbc:mysql://localhost:3306/hospital_selection?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # Jackson配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    serialization:
+      write-dates-as-timestamps: false
+    # 支持Java 8时间类型（LocalDate, LocalDateTime）
+    default-property-inclusion: non_null
+
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  # MVC配置（修复Swagger兼容性）
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+# MyBatis配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.chen.HospitalSelection.model
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# JWT配置
+jwt:
+  # 密钥长度必须>=512位(64字节)用于HS512算法
+  secret: ${JWT_SECRET:hospital-selection-system-secret-key-2024-very-long-and-secure-for-hs512-algorithm}
+  expiration: ${JWT_EXPIRATION:604800000}  # 7天，单位毫秒
+
+# 文件上传配置
+file:
+  upload-path: ${FILE_UPLOAD_PATH:D:/upload/hospital-selection}  # 文件保存路径
+  access-url: ${FILE_ACCESS_URL:/uploads}  # 文件访问URL前缀
+
+# 日志配置
+logging:
+  level:
+    com.chen.HospitalSelection: debug
+    org.springframework.security: debug
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

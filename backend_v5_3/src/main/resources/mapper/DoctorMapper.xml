@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.HospitalSelection.mapper.DoctorMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.chen.HospitalSelection.model.Doctor">
+        <id column="id" property="id"/>
+        <result column="doctor_name" property="doctorName"/>
+        <result column="hospital_id" property="hospitalId"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="title" property="title"/>
+        <result column="specialty" property="specialty"/>
+        <result column="academic_background" property="academicBackground"/>
+        <result column="schedule_time" property="scheduleTime"/>
+        <result column="consultation_fee" property="consultationFee"/>
+        <result column="rating" property="rating"/>
+        <result column="review_count" property="reviewCount"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 医生详细信息映射（包含医院和科室信息） -->
+    <resultMap id="DoctorWithDetailsResultMap" type="com.chen.HospitalSelection.model.Doctor" extends="BaseResultMap">
+        <result column="hospital_name" property="hospitalName"/>
+        <result column="dept_name" property="deptName"/>
+    </resultMap>
+
+    <!-- 基础查询字段 -->
+    <sql id="Base_Column_List">
+        id, doctor_name, hospital_id, dept_id, title, specialty, academic_background,
+        schedule_time, consultation_fee, rating, review_count, is_deleted, create_time, update_time
+    </sql>
+
+    <!-- 查询所有医生（包含医院和科室名称） -->
+    <select id="selectAll" resultMap="DoctorWithDetailsResultMap">
+        SELECT
+            d.id, d.doctor_name, d.hospital_id, d.dept_id, d.title, d.specialty,
+            d.academic_background, d.schedule_time, d.consultation_fee,
+            d.rating, d.review_count, d.is_deleted, d.create_time, d.update_time,
+            h.hospital_name, dept.dept_name
+        FROM doctor_info d
+        LEFT JOIN hospital_info h ON d.hospital_id = h.id AND h.is_deleted = 0
+        LEFT JOIN hospital_department dept ON d.dept_id = dept.id AND dept.is_deleted = 0
+        WHERE d.is_deleted = 0
+        ORDER BY d.rating DESC, d.review_count DESC
+    </select>
+
+    <!-- 查询所有医生（可选择是否包含已删除） -->
+    <select id="selectAllIncludingDeleted" resultMap="DoctorWithDetailsResultMap">
+        SELECT
+            d.id, d.doctor_name, d.hospital_id, d.dept_id, d.title, d.specialty,
+            d.academic_background, d.schedule_time, d.consultation_fee,
+            d.rating, d.review_count, d.is_deleted, d.create_time, d.update_time,
+            h.hospital_name, dept.dept_name
+        FROM doctor_info d
+        LEFT JOIN hospital_info h ON d.hospital_id = h.id AND h.is_deleted = 0
+        LEFT JOIN hospital_department dept ON d.dept_id = dept.id AND dept.is_deleted = 0
+        <where>
+            <if test="!includeDeleted">
+                d.is_deleted = 0
+            </if>
+        </where>
+        ORDER BY d.is_deleted ASC, d.rating DESC, d.review_count DESC
+    </select>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM doctor_info
+        WHERE id = #{id} AND is_deleted = 0
+    </select>
+
+    <!-- 根据ID查询（包含医院和科室信息） -->
+    <select id="selectWithDetailsById" resultMap="DoctorWithDetailsResultMap">
+        SELECT
+            d.id, d.doctor_name, d.hospital_id, d.dept_id, d.title, d.specialty,
+            d.academic_background, d.schedule_time, d.consultation_fee,
+            d.rating, d.review_count, d.is_deleted, d.create_time, d.update_time,
+            h.hospital_name, dept.dept_name
+        FROM doctor_info d
+        LEFT JOIN hospital_info h ON d.hospital_id = h.id AND h.is_deleted = 0
+        LEFT JOIN hospital_department dept ON d.dept_id = dept.id AND dept.is_deleted = 0
+        WHERE d.id = #{id} AND d.is_deleted = 0
+    </select>
+
+    <!-- 根据医院ID查询医生（从doctor_info表获取，LEFT JOIN科室信息） -->
+    <select id="selectByHospitalId" resultMap="DoctorWithDetailsResultMap">
+        SELECT
+            d.id, d.doctor_name, d.hospital_id, d.dept_id, d.title, d.specialty,
+            d.academic_background, d.schedule_time, d.consultation_fee,
+            d.rating, d.review_count, d.is_deleted, d.create_time, d.update_time,
+            h.hospital_name, dept.dept_name
+        FROM doctor_info d
+        LEFT JOIN hospital_info h ON d.hospital_id = h.id AND h.is_deleted = 0
+        LEFT JOIN hospital_department dept ON d.dept_id = dept.id AND dept.is_deleted = 0
+        WHERE d.hospital_id = #{hospitalId} AND d.is_deleted = 0
+        ORDER BY d.rating DESC, d.review_count DESC
+    </select>
+
+    <!-- 根据医院ID查询医生（可选择是否包含已删除） -->
+    <select id="selectByHospitalIdIncludingDeleted" resultMap="DoctorWithDetailsResultMap">
+        SELECT
+            d.id, d.doctor_name, d.hospital_id, d.dept_id, d.title, d.specialty,
+            d.academic_background, d.schedule_time, d.consultation_fee,
+            d.rating, d.review_count, d.is_deleted, d.create_time, d.update_time,
+            h.hospital_name, dept.dept_name
+        FROM doctor_info d
+        LEFT JOIN hospital_info h ON d.hospital_id = h.id AND h.is_deleted = 0
+        LEFT JOIN hospital_department dept ON d.dept_id = dept.id AND dept.is_deleted = 0
+        <where>
+            d.hospital_id = #{hospitalId}
+            <if test="!includeDeleted">
+                AND d.is_deleted = 0
+            </if>
+        </where>
+        ORDER BY d.is_deleted ASC, d.rating DESC, d.review_count DESC
+    </select>
+
+    <!-- 根据科室ID查询医生（包含医院和科室名称） -->
+    <select id="selectByDeptId" resultMap="DoctorWithDetailsResultMap">
+        SELECT
+            d.id, d.doctor_name, d.hospital_id, d.dept_id, d.title, d.specialty,
+            d.academic_background, d.schedule_time, d.consultation_fee,
+            d.rating, d.review_count, d.is_deleted, d.create_time, d.update_time,
+            h.hospital_name, dept.dept_name
+        FROM doctor_info d
+        LEFT JOIN hospital_info h ON d.hospital_id = h.id AND h.is_deleted = 0
+        LEFT JOIN hospital_department dept ON d.dept_id = dept.id AND dept.is_deleted = 0
+        WHERE d.dept_id = #{deptId} AND d.is_deleted = 0
+        ORDER BY d.rating DESC, d.review_count DESC
+    </select>
+
+    <!-- 根据医院ID和科室名称查询医生（使用dept_name字符串筛选） -->
+    <select id="selectByHospitalAndDeptName" resultMap="DoctorWithDetailsResultMap">
+        SELECT
+            d.id, d.doctor_name, d.hospital_id, d.dept_id, d.title, d.specialty,
+            d.academic_background, d.schedule_time, d.consultation_fee,
+            d.rating, d.review_count, d.is_deleted, d.create_time, d.update_time,
+            h.hospital_name, dept.dept_name
+        FROM doctor_info d
+        LEFT JOIN hospital_info h ON d.hospital_id = h.id AND h.is_deleted = 0
+        LEFT JOIN hospital_department dept ON d.hospital_id = dept.hospital_id
+            AND d.dept_id = dept.id
+            AND d.is_deleted = 0
+            AND dept.is_deleted = 0
+        WHERE d.hospital_id = #{hospitalId} AND d.is_deleted = 0
+            AND dept.dept_name = #{deptName}
+        ORDER BY d.rating DESC, d.review_count DESC
+    </select>
+
+    <!-- 根据医院ID和科室ID查询医生（包含医院和科室名称） -->
+    <select id="selectByHospitalAndDept" resultMap="DoctorWithDetailsResultMap">
+        SELECT
+            d.id, d.doctor_name, d.hospital_id, d.dept_id, d.title, d.specialty,
+            d.academic_background, d.schedule_time, d.consultation_fee,
+            d.rating, d.review_count, d.is_deleted, d.create_time, d.update_time,
+            h.hospital_name, dept.dept_name
+        FROM doctor_info d
+        LEFT JOIN hospital_info h ON d.hospital_id = h.id AND h.is_deleted = 0
+        LEFT JOIN hospital_department dept ON d.dept_id = dept.id AND dept.is_deleted = 0
+        WHERE d.hospital_id = #{hospitalId} AND d.dept_id = #{deptId} AND d.is_deleted = 0
+        ORDER BY d.rating DESC, d.review_count DESC
+    </select>
+
+    <!-- 条件查询（包含医院和科室名称） -->
+    <select id="selectByCondition" resultMap="DoctorWithDetailsResultMap">
+        SELECT
+            d.id, d.doctor_name, d.hospital_id, d.dept_id, d.title, d.specialty,
+            d.academic_background, d.schedule_time, d.consultation_fee,
+            d.rating, d.review_count, d.is_deleted, d.create_time, d.update_time,
+            h.hospital_name, dept.dept_name
+        FROM doctor_info d
+        LEFT JOIN hospital_info h ON d.hospital_id = h.id AND h.is_deleted = 0
+        LEFT JOIN hospital_department dept ON d.dept_id = dept.id AND dept.is_deleted = 0
+        <where>
+            d.is_deleted = 0
+            <if test="doctorName != null and doctorName != ''">
+                AND d.doctor_name LIKE CONCAT('%', #{doctorName}, '%')
+            </if>
+            <if test="hospitalId != null">
+                AND d.hospital_id = #{hospitalId}
+            </if>
+            <if test="deptId != null">
+                AND d.dept_id = #{deptId}
+            </if>
+            <if test="title != null and title != ''">
+                AND d.title = #{title}
+            </if>
+            <if test="specialty != null and specialty != ''">
+                AND d.specialty LIKE CONCAT('%', #{specialty}, '%')
+            </if>
+            <if test="minRating != null">
+                AND d.rating &gt;= #{minRating}
+            </if>
+            <if test="maxFee != null">
+                AND d.consultation_fee &lt;= #{maxFee}
+            </if>
+        </where>
+        ORDER BY d.rating DESC, d.review_count DESC
+    </select>
+
+    <!-- 简单条件查询（用于Service层，包含医院和科室名称） -->
+    <select id="selectBySimpleCondition" resultMap="DoctorWithDetailsResultMap">
+        SELECT
+            d.id, d.doctor_name, d.hospital_id, d.dept_id, d.title, d.specialty,
+            d.academic_background, d.schedule_time, d.consultation_fee,
+            d.rating, d.review_count, d.is_deleted, d.create_time, d.update_time,
+            h.hospital_name, dept.dept_name
+        FROM doctor_info d
+        LEFT JOIN hospital_info h ON d.hospital_id = h.id AND h.is_deleted = 0
+        LEFT JOIN hospital_department dept ON d.dept_id = dept.id AND dept.is_deleted = 0
+        <where>
+            d.is_deleted = 0
+            <if test="hospitalId != null">
+                AND d.hospital_id = #{hospitalId}
+            </if>
+            <if test="deptId != null">
+                AND d.dept_id = #{deptId}
+            </if>
+            <if test="title != null and title != ''">
+                AND d.title = #{title}
+            </if>
+        </where>
+        ORDER BY d.rating DESC, d.review_count DESC
+    </select>
+
+    <!-- 分页查询（包含医院和科室名称） -->
+    <select id="selectByPage" resultMap="DoctorWithDetailsResultMap">
+        SELECT
+            d.id, d.doctor_name, d.hospital_id, d.dept_id, d.title, d.specialty,
+            d.academic_background, d.schedule_time, d.consultation_fee,
+            d.rating, d.review_count, d.is_deleted, d.create_time, d.update_time,
+            h.hospital_name, dept.dept_name
+        FROM doctor_info d
+        LEFT JOIN hospital_info h ON d.hospital_id = h.id AND h.is_deleted = 0
+        LEFT JOIN hospital_department dept ON d.dept_id = dept.id AND dept.is_deleted = 0
+        WHERE d.is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (d.doctor_name LIKE CONCAT('%', #{keyword}, '%')
+            OR d.specialty LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="hospitalId != null">
+            AND d.hospital_id = #{hospitalId}
+        </if>
+        <if test="deptId != null">
+            AND d.dept_id = #{deptId}
+        </if>
+        <if test="title != null and title != ''">
+            AND d.title = #{title}
+        </if>
+        ORDER BY
+        <choose>
+            <when test="sortField == 'rating'">d.rating DESC</when>
+            <when test="sortField == 'consultationFee'">d.consultation_fee ASC</when>
+            <when test="sortField == 'reviewCount'">d.review_count DESC</when>
+            <otherwise>d.create_time DESC</otherwise>
+        </choose>
+    </select>
+
+    <!-- 统计总数 -->
+    <select id="countByCondition" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM doctor_info
+        WHERE is_deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (doctor_name LIKE CONCAT('%', #{keyword}, '%')
+            OR specialty LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="hospitalId != null">
+            AND hospital_id = #{hospitalId}
+        </if>
+        <if test="deptId != null">
+            AND dept_id = #{deptId}
+        </if>
+    </select>
+
+    <!-- 根据关键词搜索医生（支持模糊搜索和已删除过滤） -->
+    <select id="searchByKeyword" resultMap="DoctorWithDetailsResultMap">
+        SELECT
+            d.id, d.doctor_name, d.hospital_id, d.dept_id, d.title, d.specialty,
+            d.academic_background, d.schedule_time, d.consultation_fee,
+            d.rating, d.review_count, d.is_deleted, d.create_time, d.update_time,
+            h.hospital_name, dept.dept_name
+        FROM doctor_info d
+        LEFT JOIN hospital_info h ON d.hospital_id = h.id AND h.is_deleted = 0
+        LEFT JOIN hospital_department dept ON d.dept_id = dept.id AND dept.is_deleted = 0
+        <where>
+            <if test="!includeDeleted">
+                d.is_deleted = 0
+            </if>
+            AND REPLACE(REPLACE(d.doctor_name, '医生', ''), '医师', '') LIKE CONCAT('%', REPLACE(REPLACE(#{keyword}, '医生', ''), '医师', ''), '%')
+            AND CHAR_LENGTH(REPLACE(REPLACE(#{keyword}, '医生', ''), '医师', '')) > 0
+        </where>
+        ORDER BY d.is_deleted ASC, d.rating DESC, d.review_count DESC
+    </select>
+
+    <!-- 搜索医生（支持模糊搜索） -->
+    <select id="searchDoctors" resultMap="DoctorWithDetailsResultMap">
+        SELECT
+            d.id, d.doctor_name, d.hospital_id, d.dept_id, d.title, d.specialty,
+            d.academic_background, d.schedule_time, d.consultation_fee,
+            d.rating, d.review_count, d.is_deleted, d.create_time, d.update_time,
+            h.hospital_name, dept.dept_name
+        FROM doctor_info d
+        LEFT JOIN hospital_info h ON d.hospital_id = h.id AND h.is_deleted = 0
+        LEFT JOIN hospital_department dept ON d.dept_id = dept.id AND dept.is_deleted = 0
+        WHERE d.is_deleted = 0 AND d.doctor_name LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY d.rating DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询热门医生 -->
+    <select id="selectTopDoctors" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM doctor_info
+        WHERE is_deleted = 0
+        <if test="hospitalId != null">
+            AND hospital_id = #{hospitalId}
+        </if>
+        ORDER BY rating DESC, review_count DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 按职称统计医生数量 -->
+    <select id="countByTitle" resultType="java.util.Map">
+        SELECT title, COUNT(*) as count
+        FROM doctor_info
+        WHERE is_deleted = 0
+        GROUP BY title
+    </select>
+
+    <!-- 插入医生 -->
+    <insert id="insert" parameterType="com.chen.HospitalSelection.model.Doctor" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO doctor_info (
+            doctor_name, hospital_id, dept_id, title, specialty, academic_background,
+            schedule_time, consultation_fee, rating, review_count, is_deleted, create_time, update_time
+        ) VALUES (
+            #{doctorName}, #{hospitalId}, #{deptId}, #{title}, #{specialty}, #{academicBackground},
+            #{scheduleTime}, #{consultationFee}, #{rating}, #{reviewCount}, #{isDeleted}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <!-- 批量插入医生 -->
+    <insert id="batchInsert">
+        INSERT INTO doctor_info (
+            doctor_name, hospital_id, dept_id, title, specialty, academic_background,
+            schedule_time, consultation_fee, rating, review_count, is_deleted, create_time, update_time
+        ) VALUES
+        <foreach collection="doctors" item="doctor" separator=",">
+            (#{doctor.doctorName}, #{doctor.hospitalId}, #{doctor.deptId}, #{doctor.title},
+             #{doctor.specialty}, #{doctor.academicBackground}, #{doctor.scheduleTime},
+             #{doctor.consultationFee}, #{doctor.rating}, #{doctor.reviewCount},
+             #{doctor.isDeleted}, #{doctor.createTime}, #{doctor.updateTime})
+        </foreach>
+    </insert>
+
+    <!-- 更新医生 -->
+    <update id="update" parameterType="com.chen.HospitalSelection.model.Doctor">
+        UPDATE doctor_info
+        <set>
+            <if test="doctorName != null and doctorName != ''">
+                doctor_name = #{doctorName},
+            </if>
+            <if test="hospitalId != null">
+                hospital_id = #{hospitalId},
+            </if>
+            <if test="deptId != null">
+                dept_id = #{deptId},
+            </if>
+            <if test="title != null and title != ''">
+                title = #{title},
+            </if>
+            <if test="specialty != null">
+                specialty = #{specialty},
+            </if>
+            <if test="academicBackground != null">
+                academic_background = #{academicBackground},
+            </if>
+            <if test="scheduleTime != null">
+                schedule_time = #{scheduleTime},
+            </if>
+            <if test="consultationFee != null">
+                consultation_fee = #{consultationFee},
+            </if>
+            <if test="rating != null">
+                rating = #{rating},
+            </if>
+            <if test="reviewCount != null">
+                review_count = #{reviewCount},
+            </if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <!-- 根据ID更新医生信息 -->
+    <update id="updateById" parameterType="com.chen.HospitalSelection.model.Doctor">
+        UPDATE doctor_info
+        SET doctor_name = #{doctorName},
+            hospital_id = #{hospitalId},
+            dept_id = #{deptId},
+            title = #{title},
+            specialty = #{specialty},
+            academic_background = #{academicBackground},
+            schedule_time = #{scheduleTime},
+            consultation_fee = #{consultationFee},
+            rating = #{rating},
+            review_count = #{reviewCount},
+            update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新医生评分 -->
+    <update id="updateRating">
+        UPDATE doctor_info
+        SET rating = #{rating}, review_count = #{reviewCount}, update_time = #{updateTime}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 逻辑删除 -->
+    <update id="deleteById">
+        UPDATE doctor_info
+        SET is_deleted = 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 批量逻辑删除 -->
+    <update id="deleteBatch">
+        UPDATE doctor_info
+        SET is_deleted = 1
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 根据科室ID删除所有医生 -->
+    <update id="deleteByDeptId">
+        UPDATE doctor_info
+        SET is_deleted = 1
+        WHERE dept_id = #{deptId}
+    </update>
+
+    <!-- 根据医院ID恢复所有医生 -->
+    <update id="restoreByHospitalId">
+        UPDATE doctor_info
+        SET is_deleted = 0
+        WHERE hospital_id = #{hospitalId}
+    </update>
+
+    <!-- 增加评价数量 -->
+    <update id="incrementReviewCount">
+        UPDATE doctor_info
+        SET review_count = review_count + 1,
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>
