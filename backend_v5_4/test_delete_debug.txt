@@ -1,0 +1,12 @@
+这是一个调试测试。请在运行测试时查看完整的错误堆栈。
+
+检查项：
+1. JWT token 是否正确生成
+2. JWT secret 是否一致
+3. 用户数据是否正确
+
+建议：重新编译项目
+mvn clean compile test-compile
+
+然后运行单个测试：
+mvn test -Dtest=MedicalHistoryControllerTest#testDeleteMedicalHistory_Success
