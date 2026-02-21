@@ -1,0 +1,83 @@
+// Element Plus 样式覆盖
+@use './variables.scss' as *;
+
+// 卡片
+.el-card {
+  border-radius: $border-radius-large;
+  box-shadow: $box-shadow-base;
+}
+
+.el-card__header {
+  padding: $spacing-lg $spacing-xl;
+  border-bottom: 1px solid $border-lighter;
+}
+
+.el-card__body {
+  padding: $spacing-xl;
+}
+
+// 按钮
+.el-button {
+  border-radius: $border-radius-base;
+  font-weight: 500;
+}
+
+// 输入框
+.el-input__wrapper {
+  border-radius: $border-radius-base;
+}
+
+// 表格
+.el-table {
+  border-radius: $border-radius-large;
+  overflow: hidden;
+}
+
+.el-table th.el-table__cell {
+  background-color: #f5f7fa;
+}
+
+// 分页
+.el-pagination {
+  justify-content: flex-end;
+}
+
+// 对话框
+.el-dialog {
+  border-radius: $border-radius-large;
+}
+
+.el-dialog__header {
+  border-bottom: 1px solid $border-lighter;
+}
+
+// 消息提示
+.el-message {
+  border-radius: $border-radius-large;
+}
+
+// 抽屉
+.el-drawer {
+  border-radius: $border-radius-large 0 0 $border-radius-large;
+}
+
+// 标签页
+.el-tabs__item {
+  font-size: $font-size-base;
+  font-weight: 500;
+}
+
+// 菜单
+.el-menu-item {
+  font-size: $font-size-base;
+}
+
+// 表单
+.el-form-item__label {
+  font-weight: 500;
+}
+
+// 头像
+.el-avatar {
+  background-color: $primary-color;
+}
