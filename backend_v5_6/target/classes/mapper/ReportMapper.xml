@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.HospitalSelection.mapper.ReportMapper">
+
+    <resultMap id="BaseResultMap" type="com.chen.HospitalSelection.model.Report">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="target_type" property="targetType"/>
+        <result column="target_id" property="targetId"/>
+        <result column="reason_type" property="reasonType"/>
+        <result column="reason" property="reason"/>
+        <result column="status" property="status"/>
+        <result column="handle_result" property="handleResult"/>
+        <result column="handler_id" property="handlerId"/>
+        <result column="handle_time" property="handleTime"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <resultMap id="VOResultMap" type="com.chen.HospitalSelection.vo.ReportVO">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="nickname" property="nickname"/>
+        <result column="avatar" property="avatar"/>
+        <result column="target_type" property="targetType"/>
+        <result column="target_id" property="targetId"/>
+        <result column="target_title" property="targetTitle"/>
+        <result column="topic_id" property="topicId"/>
+        <result column="reason_type" property="reasonType"/>
+        <result column="reason" property="reason"/>
+        <result column="status" property="status"/>
+        <result column="handle_result" property="handleResult"/>
+        <result column="handler_id" property="handlerId"/>
+        <result column="handler_name" property="handlerName"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, user_id, target_type, target_id, reason_type, reason, status,
+        handle_result, handler_id, handle_time, create_time
+    </sql>
+
+    <insert id="insert" parameterType="com.chen.HospitalSelection.model.Report">
+        INSERT INTO community_report (user_id, target_type, target_id, reason_type, reason, status)
+        VALUES (#{userId}, #{targetType}, #{targetId}, #{reasonType}, #{reason}, #{status})
+    </insert>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_report
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByPage" resultMap="VOResultMap">
+        SELECT
+            r.id,
+            r.user_id,
+            u.nickname,
+            u.avatar,
+            r.target_type,
+            r.target_id,
+            CASE
+                WHEN r.target_type = 1 THEN t.title
+                WHEN r.target_type = 2 THEN SUBSTRING(c.content, 1, 50)
+                ELSE NULL
+            END AS target_title,
+            CASE
+                WHEN r.target_type = 1 THEN r.target_id
+                WHEN r.target_type = 2 THEN c.topic_id
+                ELSE NULL
+            END AS topic_id,
+            r.reason_type,
+            r.reason,
+            r.status,
+            r.handle_result,
+            r.handler_id,
+            hu.nickname AS handler_name,
+            r.create_time
+        FROM community_report r
+        LEFT JOIN sys_user u ON r.user_id = u.id AND u.is_deleted = 0
+        LEFT JOIN sys_user hu ON r.handler_id = hu.id AND hu.is_deleted = 0
+        LEFT JOIN community_topic t ON r.target_type = 1 AND r.target_id = t.id
+        LEFT JOIN community_comment c ON r.target_type = 2 AND r.target_id = c.id
+        <where>
+            <if test="status != null">
+                AND r.status = #{status}
+            </if>
+        </where>
+        ORDER BY r.create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countByStatus" resultType="int">
+        SELECT COUNT(*)
+        FROM community_report
+        <where>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateStatus">
+        UPDATE community_report
+        SET status = #{status},
+            handle_result = #{handleResult},
+            handler_id = #{handlerId},
+            handle_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM community_report WHERE id = #{id}
+    </delete>
+
+</mapper>
