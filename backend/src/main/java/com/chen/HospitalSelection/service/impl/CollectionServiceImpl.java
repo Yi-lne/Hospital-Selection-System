@@ -11,7 +11,9 @@ import com.chen.HospitalSelection.model.Doctor;
 import com.chen.HospitalSelection.model.Hospital;
 import com.chen.HospitalSelection.model.Topic;
 import com.chen.HospitalSelection.model.UserCollectionItem;
+import com.chen.HospitalSelection.model.User;
 import com.chen.HospitalSelection.service.CollectionService;
+import com.chen.HospitalSelection.service.NotificationService;
 import com.chen.HospitalSelection.util.JwtUtil;
 import com.chen.HospitalSelection.vo.*;
 import com.github.pagehelper.PageHelper;
@@ -50,6 +52,12 @@ public class CollectionServiceImpl implements CollectionService {
     @Autowired
     private TopicMapper topicMapper;
 
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private com.chen.HospitalSelection.mapper.UserMapper userMapper;
+
     @Override
     @Transactional
     public Long addCollection(Long userId, CollectionDTO dto) {
@@ -79,6 +87,15 @@ public class CollectionServiceImpl implements CollectionService {
         collection.setCreateTime(LocalDateTime.now());
 
         collectionMapper.insert(collection);
+
+        // 如果是收藏话题，创建通知给话题作者（不给自己发通知）
+        if (dto.getTargetType() == 3) {
+            Topic topic = topicMapper.selectById(dto.getTargetId());
+            if (topic != null && !topic.getUserId().equals(userId)) {
+                User collector = userMapper.selectById(userId);
+                notificationService.createCollectNotification(dto.getTargetId(), topic.getUserId(), collector.getNickname());
+            }
+        }
 
         log.info("收藏添加成功，收藏ID：{}", collection.getId());
         return collection.getId();
@@ -234,6 +251,13 @@ public class CollectionServiceImpl implements CollectionService {
                 doctorVO.setDoctorName(doctor.getDoctorName());
                 doctorVO.setTitle(doctor.getTitle());
                 doctorVO.setHospitalId(doctor.getHospitalId());
+
+                // 设置医院名称
+                Hospital hospital = hospitalMapper.selectById(doctor.getHospitalId());
+                if (hospital != null) {
+                    doctorVO.setHospitalName(hospital.getHospitalName());
+                }
+
                 doctorVO.setDeptId(doctor.getDeptId());
                 doctorVO.setSpecialty(doctor.getSpecialty());
                 doctorVO.setScheduleTime(doctor.getScheduleTime());

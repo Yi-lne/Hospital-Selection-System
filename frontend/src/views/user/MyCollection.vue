@@ -14,6 +14,8 @@
               v-for="item in hospitalList"
               :key="item.id"
               :hospital="item"
+              @click="handleHospitalClick(item)"
+              @collection-change="loadCollection"
             />
           </div>
           <Empty v-else description="暂无收藏的医院" />
@@ -25,6 +27,8 @@
               v-for="item in doctorList"
               :key="item.id"
               :doctor="item"
+              @click="handleDoctorClick(item)"
+              @collection-change="loadCollection"
             />
           </div>
           <Empty v-else description="暂无收藏的医生" />
@@ -36,6 +40,8 @@
               v-for="item in topicList"
               :key="item.id"
               :topic="item"
+              @click="handleTopicClick(item)"
+              @collection-change="loadCollection"
             />
           </div>
           <Empty v-else description="暂无收藏的话题" />
@@ -58,16 +64,17 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { getCollectionList } from '@/api/collection'
 import HospitalCard from '@/components/hospital/HospitalCard.vue'
 import DoctorCard from '@/components/doctor/DoctorCard.vue'
 import TopicCard from '@/components/community/TopicCard.vue'
 import Empty from '@/components/common/Empty.vue'
-import type { HospitalSimple } from '@/types/hospital'
-import type { DoctorSimple } from '@/types/doctor'
-import type { Topic } from '@/types/community'
+
+
+
 
 const loading = ref(false)
 const activeTab = ref('hospital')
@@ -75,9 +82,12 @@ const page = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 
-const hospitalList = ref<HospitalSimple[]>([])
-const doctorList = ref<DoctorSimple[]>([])
-const topicList = ref<Topic[]>([])
+const hospitalList = ref([])
+const doctorList = ref([])
+const topicList = ref([])
+
+const router = useRouter()
+const route = useRoute()
 
 // 收藏类型常量（1=医院，2=医生，3=话题）
 const COLLECTION_TYPE = {
@@ -98,7 +108,7 @@ const loadCollection = async () => {
     doctorList.value = []
     topicList.value = []
 
-    res.data.list.forEach((item: any) => {
+    res.data.list.forEach((item) => {
       if (item.targetType === COLLECTION_TYPE.HOSPITAL) {
         // 提取医院信息并映射字段名
         if (item.hospital) {
@@ -118,12 +128,16 @@ const loadCollection = async () => {
         if (item.doctor) {
           doctorList.value.push({
             id: item.doctor.id,
-            name: item.doctor.doctorName,
+            doctorName: item.doctor.doctorName,
             title: item.doctor.title,
             hospitalName: item.doctor.hospitalName,
-            departmentName: item.doctor.deptName,
+            deptName: item.doctor.deptName,
             specialty: item.doctor.specialty,
-            avatar: ''
+            scheduleTime: item.doctor.scheduleTime || '暂无',
+            consultationFee: item.doctor.consultationFee || 0,
+            rating: item.doctor.rating || 0,
+            reviewCount: item.doctor.reviewCount || 0,
+            avatar: item.doctor.avatar || ''
           })
         }
       } else if (item.targetType === COLLECTION_TYPE.TOPIC) {
@@ -145,7 +159,7 @@ const loadCollection = async () => {
       }
     })
   } catch (error) {
-    console.error('Failed to load collection:', error)
+    console.error('加载收藏失败:', error)
   } finally {
     loading.value = false
   }
@@ -158,15 +172,41 @@ const handleTabChange = () => {
 }
 
 // 分页大小改变
-const handleSizeChange = (size: number) => {
+const handleSizeChange = (size) => {
   page.value = 1
   pageSize.value = size
   loadCollection()
 }
 
 onMounted(() => {
+  // 检查是否有指定的activeTab参数
+  if (route.query.activeTab) {
+    activeTab.value = route.query.activeTab
+  }
+
   loadCollection()
 })
+
+// 点击医生卡片
+const handleDoctorClick = (doctor) => {
+  router.push({
+    path: `/doctor/${doctor.id}`,
+    query: {
+      from: 'myCollection',
+      tab: activeTab.value  // 传递当前激活的Tab（hospital/doctor/topic）
+    }
+  })
+}
+
+// 点击医院卡片
+const handleHospitalClick = (hospital) => {
+  router.push(`/hospital/${hospital.id}`)
+}
+
+// 点击话题卡片
+const handleTopicClick = (topic) => {
+  router.push(`/community/topic/${topic.id}`)
+}
 </script>
 
 <style scoped lang="scss">

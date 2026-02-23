@@ -20,8 +20,6 @@ public class HospitalSelectionApplication {
         SpringApplication.run(HospitalSelectionApplication.class, args);
         System.out.println("\n========================================");
         System.out.println("医院选择系统启动成功！");
-        System.out.println("访问地址: http://localhost:8088/api");
-        System.out.println("Swagger文档: http://localhost:8088/api/swagger-ui/");
         System.out.println("========================================\n");
     }
 }

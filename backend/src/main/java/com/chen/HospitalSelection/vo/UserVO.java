@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 用户信息返回对象
@@ -41,12 +42,37 @@ public class UserVO {
     private Integer gender;
 
     /**
+     * 性别文本（用于前端显示）
+     */
+    private String genderText;
+
+    /**
      * 用户状态（1 = 正常，0 = 禁用）
      */
     private Integer status;
 
     /**
+     * 封禁开始时间
+     */
+    private String banStartTime;
+
+    /**
+     * 封禁结束时间
+     */
+    private String banEndTime;
+
+    /**
+     * 封禁原因
+     */
+    private String banReason;
+
+    /**
      * 注册时间
      */
     private LocalDateTime createTime;
+
+    /**
+     * 角色列表（如：["user", "admin"]）
+     */
+    private List<String> roles;
 }

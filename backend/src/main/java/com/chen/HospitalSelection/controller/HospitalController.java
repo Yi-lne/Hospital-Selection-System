@@ -1,5 +1,6 @@
 package com.chen.HospitalSelection.controller;
 
+import com.chen.HospitalSelection.dto.AIQueryRequestDTO;
 import com.chen.HospitalSelection.dto.HospitalFilterDTO;
 import com.chen.HospitalSelection.dto.PageQueryDTO;
 import com.chen.HospitalSelection.service.HospitalService;
@@ -11,6 +12,7 @@ import com.chen.HospitalSelection.vo.PageResult;
 import com.chen.HospitalSelection.vo.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +25,7 @@ import java.util.List;
  *
  * @author chen
  */
+@Slf4j
 @RestController
 @RequestMapping("/hospital")
 @Api(tags = "医院管理")
@@ -30,6 +33,9 @@ public class HospitalController {
 
     @Autowired
     private HospitalService hospitalService;
+
+    @Autowired
+    private com.chen.HospitalSelection.service.DoctorService doctorService;
 
     /**
      * 医院列表（分页）
@@ -125,6 +131,24 @@ public class HospitalController {
     }
 
     /**
+     * 根据科室名称筛选医院医生列表
+     * 接口路径：GET /api/hospital/{id}/doctors/dept/{deptName}
+     * 是否需要登录：否
+     *
+     * @param id 医院ID
+     * @param deptName 科室名称
+     * @return 筛选后的医生列表
+     */
+    @GetMapping("/{id}/doctors/dept/{deptName}")
+    @ApiOperation("根据科室名称筛选医院医生列表")
+    public Result<List<DoctorSimpleVO>> getHospitalDoctorsByDeptName(
+            @PathVariable Long id,
+            @PathVariable String deptName) {
+        List<DoctorSimpleVO> doctors = doctorService.getDoctorsByHospitalAndDeptName(id, deptName);
+        return Result.success(doctors);
+    }
+
+    /**
      * 医院搜索建议
      * 接口路径：GET /api/hospital/search/suggest
      * 是否需要登录：否
@@ -137,5 +161,27 @@ public class HospitalController {
     public Result<List<String>> searchSuggest(@RequestParam String keyword) {
         List<String> suggestions = hospitalService.getSearchSuggestions(keyword);
         return Result.success(suggestions);
+    }
+
+    /**
+     * AI智能推荐医院
+     * 接口路径：POST /api/hospital/ai-recommend
+     * 是否需要登录：否
+     *
+     * @param request AI查询请求（包含用户的自然语言查询和分页参数）
+     * @return 医院列表
+     */
+    @PostMapping("/ai-recommend")
+    @ApiOperation("AI智能推荐医院")
+    public Result<PageResult<HospitalSimpleVO>> aiRecommend(@RequestBody @Valid AIQueryRequestDTO request) {
+        log.info("收到AI推荐请求，查询内容：{}", request.getQuery());
+
+        try {
+            PageResult<HospitalSimpleVO> result = hospitalService.aiRecommendHospitals(request);
+            return Result.success(result, "AI推荐成功");
+        } catch (Exception e) {
+            log.error("AI推荐失败", e);
+            return Result.error(500, "AI推荐失败：" + e.getMessage());
+        }
     }
 }

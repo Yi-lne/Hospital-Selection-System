@@ -26,10 +26,18 @@ export default defineConfig({
     port: 3000,
     open: true,
     proxy: {
+      // API接口代理
       '/api': {
         target: 'http://localhost:8088',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/api')
+      },
+      // 静态资源代理（头像、图片等）
+      // 需要代理到 /api/uploads 因为后端有context-path
+      '/uploads': {
+        target: 'http://localhost:8088',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/uploads/, '/api/uploads')
       }
     }
   },

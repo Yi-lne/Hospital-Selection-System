@@ -15,16 +15,21 @@
       </template>
 
       <el-table v-loading="loading" :data="historyList" stripe>
-        <el-table-column prop="diseaseName" label="疾病名称" width="200" />
-        <el-table-column prop="description" label="描述" show-overflow-tooltip />
-        <el-table-column prop="visitDate" label="就诊日期" width="120">
+        <el-table-column prop="diseaseName" label="疾病名称" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="status" label="状态" width="90">
           <template #default="{ row }">
-            {{ row.visitDate || '-' }}
+            <el-tag v-if="row.status === 1" type="warning">治疗中</el-tag>
+            <el-tag v-else-if="row.status === 2" type="success">已康复</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="hospitalName" label="就诊医院" width="180" />
-        <el-table-column prop="doctorName" label="医生" width="120" />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column prop="diagnosisDate" label="就诊日期" width="120">
+          <template #default="{ row }">
+            {{ row.diagnosisDate || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="hospitalName" label="就诊医院" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="doctorName" label="医生" min-width="100" />
+        <el-table-column label="操作" width="140" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="openDialog(row)">
               编辑
@@ -68,23 +73,22 @@
           <el-input v-model="formData.diseaseName" placeholder="请输入疾病名称" />
         </el-form-item>
 
-        <el-form-item label="描述" prop="description">
-          <el-input
-            v-model="formData.description"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入病情描述"
-          />
-        </el-form-item>
-
-        <el-form-item label="就诊日期" prop="visitDate">
+        <el-form-item label="就诊日期" prop="diagnosisDate">
           <el-date-picker
-            v-model="formData.visitDate"
+            v-model="formData.diagnosisDate"
             type="date"
             placeholder="请选择就诊日期"
             format="YYYY-MM-DD"
             value-format="YYYY-MM-DD"
+            :disabled-date="disabledFutureDate"
           />
+        </el-form-item>
+
+        <el-form-item label="状态" prop="status">
+          <el-select v-model="formData.status" placeholder="请选择状态" style="width: 100%">
+            <el-option label="治疗中" :value="1" />
+            <el-option label="已康复" :value="2" />
+          </el-select>
         </el-form-item>
 
         <el-form-item label="就诊医院" prop="hospitalName">
@@ -106,10 +110,10 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
-import type { FormInstance, FormRules } from 'element-plus'
+
 import { ElMessage } from 'element-plus'
 import {
   getMedicalHistoryList,
@@ -117,31 +121,39 @@ import {
   updateMedicalHistory,
   deleteMedicalHistory
 } from '@/api/medical-history'
-import type { MedicalHistory } from '@/types/other'
+
 
 const loading = ref(false)
 const submitting = ref(false)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
-const formRef = ref<FormInstance>()
-const historyList = ref<MedicalHistory[]>([])
+const formRef = ref()
+const historyList = ref([])
 const total = ref(0)
 const page = ref(1)
 const pageSize = ref(10)
-const currentId = ref<number | null>(null)
+const currentId = ref(null)
 
 const formData = reactive({
   diseaseName: '',
-  description: '',
-  visitDate: '',
+  diagnosisDate: '',
   hospitalName: '',
-  doctorName: ''
+  doctorName: '',
+  status: 1
 })
 
-const rules: FormRules = {
+const rules = {
   diseaseName: [
     { required: true, message: '请输入疾病名称', trigger: 'blur' }
+  ],
+  status: [
+    { required: true, message: '请选择状态', trigger: 'change' }
   ]
+}
+
+// 禁用未来日期
+const disabledFutureDate = (time) => {
+  return time.getTime() > Date.now()
 }
 
 // 加载病史列表
@@ -149,31 +161,40 @@ const loadHistory = async () => {
   try {
     loading.value = true
     const res = await getMedicalHistoryList(page.value, pageSize.value)
-    historyList.value = res.data.list
-    total.value = res.data.total
+    historyList.value = res.data || []
+    total.value = res.data?.length || 0
   } catch (error) {
-    console.error('Failed to load medical history:', error)
+    console.error('加载病史失败:', error)
   } finally {
     loading.value = false
   }
 }
 
 // 打开对话框
-const openDialog = (row?: MedicalHistory) => {
+const openDialog = (row) => {
   if (row) {
+    // 编辑模式
     isEdit.value = true
     currentId.value = row.id
     Object.assign(formData, {
       diseaseName: row.diseaseName,
-      description: row.description || '',
-      visitDate: row.visitDate || '',
+      diagnosisDate: row.diagnosisDate || '',
       hospitalName: row.hospitalName || '',
-      doctorName: row.doctorName || ''
+      doctorName: row.doctorName || '',
+      status: row.status || 1
     })
   } else {
+    // 添加模式：清空表单数据
     isEdit.value = false
     currentId.value = null
-    formRef.value?.resetFields()
+    Object.assign(formData, {
+      diseaseName: '',
+      diagnosisDate: '',
+      hospitalName: '',
+      doctorName: '',
+      status: 1
+    })
+    formRef.value?.clearValidate()
   }
   dialogVisible.value = true
 }
@@ -196,7 +217,7 @@ const handleSubmit = async () => {
         dialogVisible.value = false
         loadHistory()
       } catch (error) {
-        console.error('Failed to submit medical history:', error)
+        console.error('提交病史失败:', error)
       } finally {
         submitting.value = false
       }
@@ -205,18 +226,18 @@ const handleSubmit = async () => {
 }
 
 // 删除病史
-const handleDelete = async (id: number) => {
+const handleDelete = async (id) => {
   try {
     await deleteMedicalHistory(id)
     ElMessage.success('删除成功')
     loadHistory()
   } catch (error) {
-    console.error('Failed to delete medical history:', error)
+    console.error('删除病史失败:', error)
   }
 }
 
 // 分页大小改变
-const handleSizeChange = (size: number) => {
+const handleSizeChange = (size) => {
   page.value = 1
   pageSize.value = size
   loadHistory()

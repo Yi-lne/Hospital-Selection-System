@@ -51,7 +51,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -59,7 +59,7 @@ import { useUserStore, useMessageStore } from '@/stores'
 import { getMessageHistory, sendMessage, markAsRead } from '@/api/message'
 import { formatRelativeTime } from '@/utils/date'
 import Empty from '@/components/common/Empty.vue'
-import type { Message } from '@/types/message'
+
 
 const route = useRoute()
 const router = useRouter()
@@ -68,19 +68,19 @@ const messageStore = useMessageStore()
 
 const loading = ref(false)
 const sending = ref(false)
-const messageList = ref<Message[]>([])
+const messageList = ref([])
 const messageContent = ref('')
-const messagesContainer = ref<HTMLElement>()
+const messagesContainer = ref()
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 
 const currentUserId = computed(() => userStore.userId)
 const chatUser = computed(() => messageStore.currentChatUser)
 
-const formatTime = (time: string) => {
+const formatTime = (time) => {
   return formatRelativeTime(time)
 }
 
-const getAvatar = (senderId: number) => {
+const getAvatar = (senderId) => {
   if (senderId === currentUserId.value) {
     return userStore.userAvatar || defaultAvatar
   }
@@ -113,7 +113,7 @@ const loadMessages = async () => {
     await nextTick()
     scrollToBottom()
   } catch (error) {
-    console.error('Failed to load messages:', error)
+    console.error('加载消息失败:', error)
   } finally {
     loading.value = false
   }
@@ -131,18 +131,12 @@ const sendMessage = async () => {
   try {
     sending.value = true
     await sendMessage({
-      receiverId: chatUser.value.userId,
-      content: messageContent.value
+      receiverId: chatUser.value.userId, content.value
     })
 
     // 添加到消息列表
     messageList.value.push({
-      id: Date.now(),
-      senderId: currentUserId.value!,
-      receiverId: chatUser.value.userId,
-      content: messageContent.value,
-      isRead: false,
-      createTime: new Date().toISOString()
+      id: Date.now(), senderId.value!, receiverId.value.userId, content.value, isRead, createTime Date().toISOString()
     })
 
     messageContent.value = ''
@@ -151,7 +145,7 @@ const sendMessage = async () => {
     await nextTick()
     scrollToBottom()
   } catch (error) {
-    console.error('Failed to send message:', error)
+    console.error('发送消息失败:', error)
   } finally {
     sending.value = false
   }

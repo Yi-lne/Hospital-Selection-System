@@ -1,5 +1,6 @@
 package com.chen.HospitalSelection.service.impl;
 
+import com.chen.HospitalSelection.dto.CaptchaVerifyDTO;
 import com.chen.HospitalSelection.dto.PageQueryDTO;
 import com.chen.HospitalSelection.dto.PasswordResetDTO;
 import com.chen.HospitalSelection.dto.PasswordUpdateDTO;
@@ -10,6 +11,8 @@ import com.chen.HospitalSelection.exception.BusinessException;
 import com.chen.HospitalSelection.exception.ParameterException;
 import com.chen.HospitalSelection.mapper.UserMapper;
 import com.chen.HospitalSelection.model.User;
+import com.chen.HospitalSelection.service.CaptchaService;
+import com.chen.HospitalSelection.service.RoleService;
 import com.chen.HospitalSelection.service.UserService;
 import com.chen.HospitalSelection.util.JwtUtil;
 import com.chen.HospitalSelection.util.PasswordUtil;
@@ -44,6 +47,12 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private CaptchaService captchaService;
+
     /**
      * 默认头像URL
      */
@@ -53,6 +62,14 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserVO register(UserRegisterDTO dto) {
         log.info("用户注册，手机号：{}", dto.getPhone());
+
+        // 0. 验证图片验证码（不删除，先验证）
+        CaptchaVerifyDTO captchaDTO = new CaptchaVerifyDTO();
+        captchaDTO.setCaptchaId(dto.getCaptchaId());
+        captchaDTO.setMoveX(dto.getMoveX());
+        if (!captchaService.verifyCaptcha(captchaDTO)) {
+            throw new ParameterException("验证码错误，请重试");
+        }
 
         // 1. 检查手机号是否已存在
         User existUser = userMapper.selectByPhone(dto.getPhone());
@@ -77,13 +94,24 @@ public class UserServiceImpl implements UserService {
         // 3. 保存到数据库
         userMapper.insert(user);
 
-        // 4. 返回用户信息
+        // 4. 验证成功后删除验证码，防止重复使用
+        captchaService.deleteCaptcha(dto.getCaptchaId());
+
+        // 5. 返回用户信息
         return convertToVO(user);
     }
 
     @Override
     public UserVO login(UserLoginDTO dto) {
         log.info("用户登录，手机号：{}", dto.getPhone());
+
+        // 0. 验证图片验证码（不删除，先验证）
+        CaptchaVerifyDTO captchaDTO = new CaptchaVerifyDTO();
+        captchaDTO.setCaptchaId(dto.getCaptchaId());
+        captchaDTO.setMoveX(dto.getMoveX());
+        if (!captchaService.verifyCaptcha(captchaDTO)) {
+            throw new ParameterException("验证码错误，请重试");
+        }
 
         // 1. 查询用户
         User user = userMapper.selectByPhone(dto.getPhone());
@@ -97,12 +125,37 @@ public class UserServiceImpl implements UserService {
             throw new ParameterException("手机号或密码错误");
         }
 
-        // 3. 检查用户状态
+        // 3. 检查用户状态和封禁时间
         if (user.getStatus() == 0) {
-            throw new BusinessException("账号已被禁用");
+            // 检查是否过了封禁时间
+            if (user.getBanEndTime() != null && user.getBanEndTime().isBefore(LocalDateTime.now())) {
+                // 封禁时间已过，自动解封并清除封禁信息
+                log.info("用户封禁时间已过，自动解封，用户ID：{}，封禁结束时间：{}", user.getId(), user.getBanEndTime());
+                user.setStatus(1);
+                user.setBanStartTime(null);
+                user.setBanEndTime(null);
+                user.setBanReason(null);
+                user.setUpdateTime(LocalDateTime.now());
+                userMapper.updateById(user);
+                // 重新查询用户信息以获取最新数据
+                user = userMapper.selectByPhone(dto.getPhone());
+            } else {
+                // 仍在封禁期内
+                String banInfo = "账号已被禁用";
+                if (user.getBanEndTime() != null) {
+                    banInfo += "，封禁至：" + user.getBanEndTime().toString();
+                }
+                if (user.getBanReason() != null && !user.getBanReason().isEmpty()) {
+                    banInfo += "，原因：" + user.getBanReason();
+                }
+                throw new BusinessException(banInfo);
+            }
         }
 
-        // 4. 生成JWT Token
+        // 4. 验证成功后删除验证码，防止重复使用
+        captchaService.deleteCaptcha(dto.getCaptchaId());
+
+        // 5. 生成JWT Token
         String token = jwtUtil.generateToken(user.getId(), user.getPhone());
 
         // 5. 返回用户信息
@@ -147,6 +200,17 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.selectById(userId);
         if (user == null) {
             throw new BusinessException("用户不存在");
+        }
+
+        // 检查昵称是否已被其他用户使用
+        if (dto.getNickname() != null && !dto.getNickname().trim().isEmpty()) {
+            // 如果昵称发生变化，检查是否被其他用户使用
+            if (!dto.getNickname().equals(user.getNickname())) {
+                User existingUser = userMapper.selectByNicknameExcludeId(dto.getNickname(), userId);
+                if (existingUser != null) {
+                    throw new ParameterException("该昵称已被其他用户使用");
+                }
+            }
         }
 
         // 更新字段
@@ -274,6 +338,10 @@ public class UserServiceImpl implements UserService {
 
         // 脱敏处理手机号
         userVO.setPhone(maskPhone(user.getPhone()));
+
+        // 查询用户角色
+        List<String> userRoles = roleService.getUserRoles(user.getId());
+        userVO.setRoles(userRoles);
 
         return userVO;
     }

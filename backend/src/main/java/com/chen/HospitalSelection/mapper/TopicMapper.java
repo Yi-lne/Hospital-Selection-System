@@ -83,6 +83,24 @@ public interface TopicMapper {
     List<Topic> selectLatestTopics(@Param("limit") Integer limit);
 
     /**
+     * 根据板块查询热门话题
+     * @param boardLevel1 一级板块
+     * @param boardLevel2 二级板块
+     * @param keyword 搜索关键词
+     * @return 话题列表
+     */
+    List<Topic> selectHotTopicsByBoard(@Param("boardLevel1") String boardLevel1, @Param("boardLevel2") String boardLevel2, @Param("keyword") String keyword);
+
+    /**
+     * 根据板块查询最新话题
+     * @param boardLevel1 一级板块
+     * @param boardLevel2 二级板块
+     * @param keyword 搜索关键词
+     * @return 话题列表
+     */
+    List<Topic> selectLatestTopicsByBoard(@Param("boardLevel1") String boardLevel1, @Param("boardLevel2") String boardLevel2, @Param("keyword") String keyword);
+
+    /**
      * 查询所有话题
      * @return 话题列表
      */

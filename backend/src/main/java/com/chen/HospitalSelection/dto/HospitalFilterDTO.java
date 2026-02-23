@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 医院筛选条件DTO
@@ -20,10 +21,10 @@ public class HospitalFilterDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 疾病编码（可选）
+     * 科室名称（可选）
      */
-    @Schema(description = "疾病编码", example = "cardiovascular")
-    private String diseaseCode;
+    @Schema(description = "科室名称", example = "心内科")
+    private String deptName;
 
     /**
      * 医院等级（可选）
@@ -78,8 +79,8 @@ public class HospitalFilterDTO implements Serializable {
     private Integer pageSize;
 
     /**
-     * 排序字段（rating = 按评分排序，distance = 按距离排序，default = 默认排序）
+     * 排序字段（level = 级别优先，rating = 评分优先，default = 默认排序）
      */
-    @Schema(description = "排序字段（rating/distance/default）", example = "rating")
+    @Schema(description = "排序字段（level/rating）", example = "level")
     private String sortBy;
 }

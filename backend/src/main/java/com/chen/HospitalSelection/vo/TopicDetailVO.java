@@ -37,6 +37,11 @@ public class TopicDetailVO {
     private String avatar;
 
     /**
+     * 发布用户性别（0=保密，1=男，2=女）
+     */
+    private Integer gender;
+
+    /**
      * 关联疾病编码
      */
     private String diseaseCode;

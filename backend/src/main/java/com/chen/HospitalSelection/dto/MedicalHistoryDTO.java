@@ -43,4 +43,16 @@ public class MedicalHistoryDTO implements Serializable {
     @NotNull(message = "状态不能为空")
     @Schema(description = "状态（1=治疗中，2=已康复）", example = "1", required = true)
     private Integer status;
+
+    /**
+     * 就诊医院名称（可选）
+     */
+    @Schema(description = "就诊医院名称", example = "北京协和医院")
+    private String hospitalName;
+
+    /**
+     * 医生姓名（可选）
+     */
+    @Schema(description = "医生姓名", example = "张医生")
+    private String doctorName;
 }

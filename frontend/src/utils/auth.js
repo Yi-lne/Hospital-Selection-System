@@ -1,5 +1,6 @@
 const TOKEN_KEY = 'hospital_token'
 const USER_INFO_KEY = 'hospital_user_info'
+const USER_ROLES_KEY = 'hospital_user_roles'
 
 /**
  * Token管理工具
@@ -58,7 +59,7 @@ export class AuthManager {
       )
       return JSON.parse(jsonPayload)
     } catch (error) {
-      throw new Error('Invalid token')
+      throw new Error('Token无效')
     }
   }
 
@@ -106,11 +107,41 @@ export class AuthManager {
   }
 
   /**
+   * 保存用户角色
+   */
+  static setUserRoles(roles) {
+    localStorage.setItem(USER_ROLES_KEY, JSON.stringify(roles))
+  }
+
+  /**
+   * 获取用户角色
+   */
+  static getUserRoles() {
+    const rolesStr = localStorage.getItem(USER_ROLES_KEY)
+    if (rolesStr) {
+      try {
+        return JSON.parse(rolesStr)
+      } catch {
+        return []
+      }
+    }
+    return []
+  }
+
+  /**
+   * 删除用户角色
+   */
+  static removeUserRoles() {
+    localStorage.removeItem(USER_ROLES_KEY)
+  }
+
+  /**
    * 清除所有认证信息
    */
   static clearAuth() {
     this.removeToken()
     this.removeUserInfo()
+    this.removeUserRoles()
   }
 }
 

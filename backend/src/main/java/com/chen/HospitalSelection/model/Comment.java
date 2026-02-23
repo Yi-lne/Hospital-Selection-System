@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 评论实体类
@@ -62,4 +63,9 @@ public class Comment {
      * 用户头像（非数据库字段，通过JOIN查询获取）
      */
     private transient String userAvatar;
+
+    /**
+     * 回复列表（非数据库字段，通过嵌套查询获取）
+     */
+    private transient List<Comment> replies;
 }

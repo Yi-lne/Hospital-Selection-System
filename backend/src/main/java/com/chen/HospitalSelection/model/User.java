@@ -49,6 +49,21 @@ public class User {
     private Integer status;
 
     /**
+     * 封禁开始时间
+     */
+    private LocalDateTime banStartTime;
+
+    /**
+     * 封禁结束时间（null表示永久封禁）
+     */
+    private LocalDateTime banEndTime;
+
+    /**
+     * 封禁原因
+     */
+    private String banReason;
+
+    /**
      * 逻辑删除（0=未删，1=已删）
      */
     private Integer isDeleted;

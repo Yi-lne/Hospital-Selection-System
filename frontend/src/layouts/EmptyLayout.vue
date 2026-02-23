@@ -8,7 +8,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 // 在离开前确保 DOM 更新完成
 const onBeforeLeave = () => {
   return new Promise(resolve => {

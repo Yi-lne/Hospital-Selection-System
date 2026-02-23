@@ -7,12 +7,12 @@
         <p>欢迎回来</p>
       </div>
 
-      <LoginForm @success="handleLoginSuccess" />
+      <LoginForm @success="handleLoginSuccess" @switch-to-register="$router.push('/auth/register')" />
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { useRouter, useRoute } from 'vue-router'
 import { OfficeBuilding } from '@element-plus/icons-vue'
 import LoginForm from '@/components/user/LoginForm.vue'
@@ -21,7 +21,7 @@ const router = useRouter()
 const route = useRoute()
 
 const handleLoginSuccess = () => {
-  const redirect = route.query.redirect as string
+  const redirect = route.query.redirect
   router.push(redirect || '/home')
 }
 </script>

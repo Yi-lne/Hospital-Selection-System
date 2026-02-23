@@ -48,8 +48,8 @@
         WHERE c.id = #{id} AND c.is_deleted = 0
     </select>
 
-    <!-- 根据话题ID查询所有一级评论 -->
-    <select id="selectByTopicId" resultMap="CommentWithUserResultMap">
+    <!-- 根据话题ID查询所有一级评论（包含回复） -->
+    <select id="selectByTopicId" resultMap="CommentTreeResultMap">
         SELECT
             c.id, c.topic_id, c.user_id, c.parent_id, c.content, c.like_count, c.is_deleted, c.create_time,
             u.nickname as user_nickname, u.avatar as user_avatar

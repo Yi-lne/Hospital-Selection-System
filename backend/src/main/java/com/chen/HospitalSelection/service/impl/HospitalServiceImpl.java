@@ -1,5 +1,6 @@
 package com.chen.HospitalSelection.service.impl;
 
+import com.chen.HospitalSelection.dto.AIQueryRequestDTO;
 import com.chen.HospitalSelection.dto.HospitalFilterDTO;
 import com.chen.HospitalSelection.dto.PageQueryDTO;
 import com.chen.HospitalSelection.exception.BusinessException;
@@ -51,6 +52,9 @@ public class HospitalServiceImpl implements HospitalService {
     @Autowired
     private AreaMapper areaMapper;
 
+    @Autowired
+    private ZhipuAIService zhipuAIService;
+
     @Override
     public PageResult<HospitalSimpleVO> getHospitalList(PageQueryDTO dto) {
         log.info("分页查询医院列表，页码：{}，每页大小：{}", dto.getPage(), dto.getPageSize());
@@ -82,7 +86,9 @@ public class HospitalServiceImpl implements HospitalService {
                 dto.getCityCode(),
                 dto.getAreaCode(),
                 dto.getIsMedicalInsurance(),
-                dto.getKeyDepartments()
+                dto.getKeyDepartments(),
+                dto.getDeptName(),
+                dto.getSortBy()
         );
 
         PageInfo<Hospital> pageInfo = new PageInfo<>(hospitalList);
@@ -181,6 +187,21 @@ public class HospitalServiceImpl implements HospitalService {
         filterDTO.setPageSize(dto.getPageSize());
 
         return filterHospitals(filterDTO);
+    }
+
+    @Override
+    public PageResult<HospitalSimpleVO> aiRecommendHospitals(AIQueryRequestDTO request) {
+        log.info("AI推荐医院，用户查询：{}", request.getQuery());
+
+        // 1. AI解析用户查询，提取筛选条件
+        HospitalFilterDTO filter = zhipuAIService.analyzeQuery(request.getQuery());
+
+        // 2. 设置分页参数
+        filter.setPage(request.getPageNum());
+        filter.setPageSize(request.getPageSize());
+
+        // 3. 调用现有的筛选方法
+        return filterHospitals(filter);
     }
 
     /**

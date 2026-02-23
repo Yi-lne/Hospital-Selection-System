@@ -86,9 +86,8 @@ public class FilterServiceImpl implements FilterService {
         // 3. 用户评价
         // 4. 地理位置（如果有用户位置信息）
 
-        // 临时实现：按重点科室模糊匹配查询
+        // 临时实现：不使用筛选条件，返回所有医院
         HospitalFilterDTO filterDTO = new HospitalFilterDTO();
-        filterDTO.setDiseaseCode(diseaseCode);
         filterDTO.setPage(pageNum);
         filterDTO.setPageSize(pageSize);
         filterDTO.setSortBy("rating"); // 默认按评分排序

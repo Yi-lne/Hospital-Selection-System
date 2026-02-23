@@ -27,6 +27,17 @@ public interface DepartmentMapper {
     List<Department> selectByHospitalId(@Param("hospitalId") Long hospitalId);
 
     /**
+     * 根据医院ID查询所有科室（可选择是否包含已删除）
+     * @param hospitalId 医院ID
+     * @param includeDeleted 是否包含已删除的科室
+     * @return 科室列表
+     */
+    List<Department> selectByHospitalIdIncludingDeleted(
+            @Param("hospitalId") Long hospitalId,
+            @Param("includeDeleted") Boolean includeDeleted
+    );
+
+    /**
      * 根据医院ID和科室名称查询
      * @param hospitalId 医院ID
      * @param deptName 科室名称
@@ -46,6 +57,12 @@ public interface DepartmentMapper {
      * @return 科室列表
      */
     List<Department> selectAll();
+
+    /**
+     * 查询所有有医生的科室（去重）
+     * @return 有医生的科室列表（按科室名称去重）
+     */
+    List<Department> selectDepartmentsWithDoctors();
 
     /**
      * 插入科室
@@ -90,9 +107,23 @@ public interface DepartmentMapper {
     int batchDelete(@Param("ids") List<Long> ids);
 
     /**
+     * 获取某医院所有医生的所属科室（去重）
+     * @param hospitalId 医院ID
+     * @return 该医院医生所属的科室列表（按科室名称去重）
+     */
+    List<Department> selectDepartmentsByHospitalDoctors(@Param("hospitalId") Long hospitalId);
+
+    /**
      * 统计医院的科室数量
      * @param hospitalId 医院ID
      * @return 科室数量
      */
     int countByHospitalId(@Param("hospitalId") Long hospitalId);
+
+    /**
+     * 根据医院ID恢复所有科室
+     * @param hospitalId 医院ID
+     * @return 影响行数
+     */
+    int restoreByHospitalId(@Param("hospitalId") Long hospitalId);
 }

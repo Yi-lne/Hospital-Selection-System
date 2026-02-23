@@ -163,7 +163,7 @@ const loadDiseaseTree = async () => {
     diseaseTree.value = res.data || []
     level1Boards.value = diseaseTree.value.filter(item => item.parentId === 0)
   } catch (error) {
-    console.error('Failed to load disease tree:', error)
+    console.error('加载疾病树失败:', error)
     ElMessage.error('加载板块失败')
   } finally {
     loading.value = false

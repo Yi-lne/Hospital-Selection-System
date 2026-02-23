@@ -65,7 +65,7 @@ const loadAreaData = async () => {
 
     areaOptions.value = data
   } catch (error) {
-    console.error('Failed to load area data:', error)
+    console.error('加载地区数据失败:', error)
   }
 }
 

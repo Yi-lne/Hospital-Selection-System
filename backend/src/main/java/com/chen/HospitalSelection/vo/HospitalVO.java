@@ -73,14 +73,14 @@ public class HospitalVO {
     private String phone;
 
     /**
-     * 重点科室列表
+     * 重点科室（逗号分隔）
      */
-    private List<String> keyDepartments;
+    private String keyDepartments;
 
     /**
-     * 医疗设备列表
+     * 医疗设备（逗号分隔）
      */
-    private List<String> medicalEquipment;
+    private String medicalEquipment;
 
     /**
      * 专家团队简介

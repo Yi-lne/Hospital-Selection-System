@@ -6,6 +6,9 @@
         <h3 class="hospital-name">{{ hospital.name }}</h3>
         <div class="hospital-tags">
           <el-tag size="small" type="danger">{{ displayLevel }}</el-tag>
+          <el-tag v-if="sortPriority === 'rating' && hospital.rating" size="small" type="warning">
+            评分：{{ hospital.rating.toFixed(1) }}
+          </el-tag>
         </div>
       </div>
     </div>
@@ -37,35 +40,94 @@
   </el-card>
 </template>
 
-<script setup lang="ts">
-import { ref, computed } from 'vue'
+<script setup>
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Location, ArrowRight, Star } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/stores'
 import { formatHospitalLevel } from '@/utils/hospital'
-import type { HospitalSimple } from '@/types/hospital'
+import { checkCollected, addCollection, cancelCollection } from '@/api/collection'
 
-const props = defineProps<{
-  hospital: HospitalSimple
-}>()
+const props = defineProps({
+  hospital: Object,
+  sortPriority: String  // 排序优先级：level-级别优先，rating-评分优先
+})
+
+const emit = defineEmits(['collection-change'])
 
 const router = useRouter()
+const userStore = useUserStore()
 const isCollected = ref(false)
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+
+// 收藏类型常量（1=医院，2=医生，3=话题）
+const COLLECTION_TYPE = {
+  HOSPITAL: 1,
+  DOCTOR: 2,
+  TOPIC: 3
+}
 
 // 将医院等级代码转换为中文显示
 const displayLevel = computed(() => {
   return formatHospitalLevel(props.hospital.level)
 })
 
+// 检查收藏状态
+const checkCollectStatus = async () => {
+  // 未登录时不检查收藏状态
+  if (!userStore.isLogin) {
+    isCollected.value = false
+    return
+  }
+
+  try {
+    const res = await checkCollected(COLLECTION_TYPE.HOSPITAL, props.hospital.id)
+    isCollected.value = res.data
+  } catch (error) {
+    console.error('检查收藏状态失败:', error)
+    isCollected.value = false
+  }
+}
+
 const goToDetail = () => {
   router.push(`/hospital/${props.hospital.id}`)
 }
 
-const toggleCollect = () => {
-  isCollected.value = !isCollected.value
-  ElMessage.success(isCollected.value ? '收藏成功' : '取消收藏')
+const toggleCollect = async () => {
+  // 未登录时提示登录
+  if (!userStore.isLogin) {
+    ElMessage.warning('请先登录')
+    router.push('/auth/login')
+    return
+  }
+
+  try {
+    if (isCollected.value) {
+      await cancelCollection({
+        targetType: COLLECTION_TYPE.HOSPITAL,
+        targetId: props.hospital.id
+      })
+      ElMessage.success('取消收藏成功')
+      // 通知父组件刷新列表
+      emit('collection-change')
+    } else {
+      await addCollection({
+        targetType: COLLECTION_TYPE.HOSPITAL,
+        targetId: props.hospital.id
+      })
+      ElMessage.success('收藏成功')
+      isCollected.value = true
+    }
+  } catch (error) {
+    console.error('切换收藏状态失败:', error)
+    ElMessage.error('操作失败')
+  }
 }
+
+onMounted(() => {
+  checkCollectStatus()
+})
 </script>
 
 <style scoped lang="scss">

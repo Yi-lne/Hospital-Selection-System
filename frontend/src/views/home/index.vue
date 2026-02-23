@@ -68,7 +68,7 @@
 <script setup>
 import { ref, onMounted, markRaw } from 'vue'
 import { useRouter } from 'vue-router'
-import { OfficeBuilding, User, ChatDotRound, Star } from '@element-plus/icons-vue'
+import { OfficeBuilding, User, ChatDotRound, Star, Edit } from '@element-plus/icons-vue'
 import HospitalCard from '@/components/hospital/HospitalCard.vue'
 import { getHospitalList } from '@/api/hospital'
 import { getTopicList } from '@/api/community'
@@ -85,13 +85,6 @@ const banners = ref([
   },
   {
     id: 2,
-    title: '专业医生团队',
-    description: '找到最合适的医生',
-    image: 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600',
-    action: () => router.push('/doctor')
-  },
-  {
-    id: 3,
     title: '病友交流社区',
     description: '分享经验，互相支持',
     image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1600',
@@ -110,14 +103,6 @@ const quickAccessItems = ref([
   },
   {
     id: 2,
-    title: '找医生',
-    description: '查找专业医生',
-    icon: markRaw(User),
-    color: '#67c23a',
-    action: () => router.push('/doctor')
-  },
-  {
-    id: 3,
     title: '社区交流',
     description: '病友经验分享',
     icon: markRaw(ChatDotRound),
@@ -125,12 +110,20 @@ const quickAccessItems = ref([
     action: () => router.push('/community')
   },
   {
-    id: 4,
+    id: 3,
     title: '我的收藏',
     description: '收藏的内容',
     icon: markRaw(Star),
     color: '#f56c6c',
     action: () => router.push('/user/collection')
+  },
+  {
+    id: 4,
+    title: '发布话题',
+    description: '分享就医经验',
+    icon: markRaw(Edit),
+    color: '#67c23a',
+    action: () => router.push('/community/publish')
   }
 ])
 
@@ -225,7 +218,7 @@ onMounted(async () => {
 
     console.log('最终展示的热帖数:', hotTopics.value.length)
   } catch (error) {
-    console.error('Failed to load data:', error)
+    console.error('加载数据失败:', error)
   }
 })
 </script>
@@ -264,12 +257,12 @@ onMounted(async () => {
       padding: 0 20px;
 
       h1 {
-        font-size: 48px;
+        font-size: clamp(24px, 5vw, 48px);
         margin-bottom: 16px;
       }
 
       p {
-        font-size: 20px;
+        font-size: clamp(14px, 2vw, 20px);
         margin-bottom: 32px;
         opacity: 0.9;
       }

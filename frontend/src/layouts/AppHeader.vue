@@ -2,21 +2,27 @@
   <el-header class="app-header">
     <div class="header-content">
       <div class="logo" @click="$router.push('/')">
-        <el-icon :size="32"><OfficeBuilding /></el-icon>
+        <el-icon :size="28"><OfficeBuilding /></el-icon>
         <span class="title">医院选择系统</span>
       </div>
 
+      <!-- 桌面端导航 -->
       <el-menu
         :default-active="activeMenu"
         mode="horizontal"
         :ellipsis="false"
-        class="nav-menu"
+        class="nav-menu desktop-menu"
         router
       >
         <el-menu-item index="/home">首页</el-menu-item>
         <el-menu-item index="/hospital">医院</el-menu-item>
-        <el-menu-item index="/doctor">医生</el-menu-item>
         <el-menu-item index="/community">社区</el-menu-item>
+        <el-sub-menu v-if="userStore.isAdmin" index="admin">
+          <template #title>管理</template>
+          <el-menu-item index="/admin/hospital">医院管理</el-menu-item>
+          <el-menu-item index="/admin/user">用户管理</el-menu-item>
+          <el-menu-item index="/admin/report">举报管理</el-menu-item>
+        </el-sub-menu>
       </el-menu>
 
       <div class="header-actions">
@@ -28,19 +34,34 @@
           class="search-input"
           @keyup.enter="handleSearch"
           clearable
+        >
+          <template #append>
+            <el-button :icon="Search" @click="handleSearch">搜索</el-button>
+          </template>
+        </el-input>
+
+        <!-- 移动端菜单按钮 -->
+        <el-button
+          class="mobile-menu-btn"
+          :icon="Menu"
+          circle
+          @click="mobileMenuVisible = true"
         />
+
+        <!-- 分隔线 -->
+        <div class="divider"></div>
 
         <!-- 未登录状态 -->
         <template v-if="!userStore.isLogin">
-          <el-button type="primary" @click="$router.push('/login')">登录</el-button>
-          <el-button @click="$router.push('/register')">注册</el-button>
+          <el-button class="desktop-only" type="primary" @click="$router.push('/auth/login')">登录</el-button>
+          <el-button class="desktop-only" @click="$router.push('/auth/register')">注册</el-button>
         </template>
 
         <!-- 已登录状态 -->
         <template v-else>
-          <!-- 消息通知 -->
-          <el-badge :value="messageStore.unreadCount" :hidden="messageStore.unreadCount === 0" class="message-badge">
-            <el-button :icon="Message" circle @click="$router.push('/message/conversations')" />
+          <!-- 通知中心 -->
+          <el-badge :value="notificationStore.unreadCount" :hidden="notificationStore.unreadCount === 0" class="notification-badge">
+            <el-button :icon="Bell" circle @click="$router.push('/user/notifications')" />
           </el-badge>
 
           <!-- 用户菜单 -->
@@ -49,7 +70,7 @@
               <el-avatar :size="36" :src="userStore.userAvatar || defaultAvatar">
                 {{ userStore.userName.charAt(0) }}
               </el-avatar>
-              <span class="username">{{ userStore.userName }}</span>
+              <span class="username desktop-only">{{ userStore.userName }}</span>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
@@ -74,29 +95,63 @@
         </template>
       </div>
     </div>
+
+    <!-- 移动端侧边菜单 -->
+    <el-drawer v-model="mobileMenuVisible" direction="rtl" size="280px" class="mobile-drawer">
+      <template #header>
+        <div class="drawer-header">
+          <span>菜单</span>
+        </div>
+      </template>
+      <el-menu
+        :default-active="activeMenu"
+        class="mobile-nav-menu"
+        router
+        @select="mobileMenuVisible = false"
+      >
+        <el-menu-item index="/home">
+          <el-icon><HomeFilled /></el-icon>首页
+        </el-menu-item>
+        <el-menu-item index="/hospital">
+          <el-icon><OfficeBuilding /></el-icon>医院
+        </el-menu-item>
+        <el-menu-item index="/community">
+          <el-icon><ChatDotRound /></el-icon>社区
+        </el-menu-item>
+        <el-sub-menu v-if="userStore.isAdmin" index="admin">
+          <template #title>
+            <el-icon><Setting /></el-icon>管理
+          </template>
+          <el-menu-item index="/admin/hospital">医院管理</el-menu-item>
+          <el-menu-item index="/admin/user">用户管理</el-menu-item>
+          <el-menu-item index="/admin/report">举报管理</el-menu-item>
+        </el-sub-menu>
+      </el-menu>
+    </el-drawer>
   </el-header>
 </template>
 
-<script setup lang="ts">
-import { ref, computed } from 'vue'
+<script setup>
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useUserStore, useMessageStore } from '@/stores'
+import { useUserStore, useNotificationStore } from '@/stores'
 import { ElMessage } from 'element-plus'
-import { OfficeBuilding, Message, User, Star, Document, Notebook, SwitchButton } from '@element-plus/icons-vue'
+import { Bell, User, Star, Document, Notebook, SwitchButton, Search, Menu, HomeFilled, ChatDotRound, Setting } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
-const messageStore = useMessageStore()
+const notificationStore = useNotificationStore()
 
 const searchKeyword = ref('')
+const mobileMenuVisible = ref(false)
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 
 const activeMenu = computed(() => {
   const path = route.path
   if (path.startsWith('/hospital')) return '/hospital'
-  if (path.startsWith('/doctor')) return '/doctor'
   if (path.startsWith('/community')) return '/community'
+  if (path.startsWith('/admin')) return 'admin'
   if (path === '/') return '/home'
   return path
 })
@@ -106,13 +161,14 @@ const handleSearch = () => {
     ElMessage.warning('请输入搜索关键词')
     return
   }
+  // 跳转到搜索结果页，支持搜索医院和医生
   router.push({
-    path: '/hospital',
+    path: '/search',
     query: { keyword: searchKeyword.value }
   })
 }
 
-const handleUserCommand = (command: string) => {
+const handleUserCommand = (command) => {
   switch (command) {
     case 'profile':
       router.push('/user/profile')
@@ -133,6 +189,27 @@ const handleUserCommand = (command: string) => {
       break
   }
 }
+
+// 初始化时启动轮询
+onMounted(() => {
+  if (userStore.isLogin) {
+    notificationStore.startPolling()
+  }
+})
+
+// 组件卸载时停止轮询
+onUnmounted(() => {
+  notificationStore.stopPolling()
+})
+
+// 监听登录状态变化，登录后启动轮询，退出后停止轮询
+watch(() => userStore.isLogin, (isLoggedIn) => {
+  if (isLoggedIn) {
+    notificationStore.startPolling()
+  } else {
+    notificationStore.stopPolling()
+  }
+})
 </script>
 
 <style scoped lang="scss">
@@ -159,31 +236,72 @@ const handleUserCommand = (command: string) => {
   gap: 12px;
   cursor: pointer;
   color: #409eff;
+  flex-shrink: 0;
 
   .title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     color: #303133;
+    white-space: nowrap;
   }
 }
 
 .nav-menu {
   flex: 1;
   border: none;
+
+  :deep(.el-menu-item),
+  :deep(.el-sub-menu__title) {
+    padding: 0 20px;
+  }
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .search-input {
-  width: 240px;
+  width: 280px;
+
+  @media (max-width: 1200px) {
+    width: 200px;
+  }
 }
 
-.message-badge {
-  margin-right: 8px;
+.mobile-menu-btn {
+  display: none;
+}
+
+.desktop-menu {
+  @media (max-width: 992px) {
+    display: none;
+  }
+}
+
+.desktop-only {
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
+.divider {
+  width: 1px;
+  height: 24px;
+  background: #e4e7ed;
+  margin: 0 8px;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
+.notification-badge {
+  @media (max-width: 768px) {
+    margin-right: 0;
+  }
 }
 
 .user-info {
@@ -206,6 +324,109 @@ const handleUserCommand = (command: string) => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+}
+
+// 移动端抽屉样式
+.mobile-drawer {
+  :deep(.el-drawer__header) {
+    margin-bottom: 0;
+    padding: 20px;
+    border-bottom: 1px solid #e4e7ed;
+  }
+
+  .drawer-header {
+    font-size: 18px;
+    font-weight: 600;
+    color: #303133;
+  }
+
+  .mobile-nav-menu {
+    border: none;
+
+    .el-menu-item,
+    .el-sub-menu__title {
+      font-size: 16px;
+      padding: 16px 20px;
+      height: auto;
+      line-height: 1.5;
+    }
+
+    .el-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+// 响应式断点
+@media (max-width: 992px) {
+  .header-content {
+    gap: 20px;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    height: 56px;
+  }
+
+  .header-content {
+    padding: 0 12px;
+    gap: 12px;
+  }
+
+  .logo {
+    :deep(.el-icon) {
+      font-size: 24px !important;
+    }
+
+    .title {
+      font-size: 16px;
+    }
+  }
+
+  .search-input {
+    width: 140px;
+
+    :deep(.el-input__inner) {
+      font-size: 14px;
+    }
+
+    :deep(.el-input-group__append) {
+      padding: 0 8px;
+
+      .el-button {
+        padding: 5px;
+      }
+    }
+  }
+
+  .header-actions {
+    gap: 8px;
+  }
+
+  .user-info {
+    padding: 4px;
+
+    .username {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .search-input {
+    width: 100px;
+  }
+
+  .logo .title {
+    display: none;
   }
 }
 </style>

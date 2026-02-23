@@ -7,12 +7,12 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { Loading as LoadingIcon } from '@element-plus/icons-vue'
 
-defineProps<{
-  text?: string
-}>()
+defineProps({
+  text: String
+})
 </script>
 
 <style scoped lang="scss">

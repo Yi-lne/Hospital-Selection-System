@@ -8,14 +8,17 @@ export const useHospitalStore = defineStore('hospital', () => {
   // 筛选条件（UI状态）
   const filterParams = ref({
     page: 1,
-    pageSize: 10,
+    pageSize: 9,
     areaCode: undefined,
+    provinceCode: undefined,
+    cityCode: undefined,
     level: undefined,
-    diseaseCode: undefined,
-    name: undefined
+    deptName: undefined,
+    name: undefined,
+    sortPriority: 'level'  // 排序优先级：level-级别优先，rating-评分优先
   })
 
-  // 选中的地区
+  // 选中的地区对象（包含level信息）
   const selectedArea = ref(null)
 
   // 选中的等级（与filterParams.level保持同步）
@@ -24,22 +27,49 @@ export const useHospitalStore = defineStore('hospital', () => {
     set: (val) => setLevel(val)
   })
 
-  // 选中的疾病编码
-  const selectedDiseaseCode = ref(undefined)
+  // 选中的科室名称（单选）
+  const selectedDeptName = ref(null)
+
+  // 排序优先级（与filterParams.sortPriority保持同步）
+  const sortPriority = computed({
+    get: () => filterParams.value.sortPriority,
+    set: (val) => setSortPriority(val)
+  })
 
   // 转换后的API参数（发送给后端）
   const apiParams = computed(() => {
     // 直接使用等级代码（UI已改为使用英文代码）
     const hospitalLevel = filterParams.value.level
 
+    // 科室名称截取前两个字进行模糊查询
+    let deptName = filterParams.value.deptName
+    if (deptName && deptName.length > 2) {
+      deptName = deptName.substring(0, 2)
+    }
+
     const params = {
       page: filterParams.value.page,
       pageSize: filterParams.value.pageSize,
-      areaCode: filterParams.value.areaCode,
       hospitalLevel,
-      diseaseCode: filterParams.value.diseaseCode
-      // 注意：name字段不包含在筛选API中，筛选API应该使用filterHospitals
-      // 如果有name搜索需求，应该使用专门的搜索接口
+      deptName,
+      name: filterParams.value.name,
+      sortBy: filterParams.value.sortPriority  // 映射到后端的 sortBy 字段
+    }
+
+    // 根据选中的地区级别，智能设置对应的字段
+    if (selectedArea.value) {
+      const area = selectedArea.value
+
+      if (area.level === 1) {
+        // 选择了省级别
+        params.provinceCode = area.code
+      } else if (area.level === 2) {
+        // 选择了市级别
+        params.cityCode = area.code
+      } else if (area.level === 3) {
+        // 选择了区/县级别
+        params.areaCode = area.code
+      }
     }
 
     return params
@@ -53,29 +83,25 @@ export const useHospitalStore = defineStore('hospital', () => {
   }
 
   /**
-   * 重置筛选条件
-   */
-  function resetFilters() {
-    // 直接设置filterParams，不要设置computed属性
-    filterParams.value = {
-      page: 1,
-      pageSize: 10,
-      areaCode: undefined,
-      level: undefined,
-      diseaseCode: undefined,
-      name: undefined
-    }
-    selectedArea.value = null
-    selectedDiseaseCode.value = undefined
-    // selectedLevel是computed，会自动更新
-  }
-
-  /**
    * 设置地区
    */
   function setArea(area) {
     selectedArea.value = area
-    setFilterParams({ areaCode: area?.code || undefined })
+    // 清空所有地区相关字段
+    filterParams.value.provinceCode = undefined
+    filterParams.value.cityCode = undefined
+    filterParams.value.areaCode = undefined
+
+    // 根据选择的地区级别，智能设置对应字段
+    if (area) {
+      if (area.level === 1) {
+        filterParams.value.provinceCode = area.code
+      } else if (area.level === 2) {
+        filterParams.value.cityCode = area.code
+      } else if (area.level === 3) {
+        filterParams.value.areaCode = area.code
+      }
+    }
   }
 
   /**
@@ -88,18 +114,25 @@ export const useHospitalStore = defineStore('hospital', () => {
   }
 
   /**
-   * 设置疾病编码
+   * 设置科室名称（单选）
    */
-  function setDiseaseCode(diseaseCode) {
-    selectedDiseaseCode.value = diseaseCode
-    setFilterParams({ diseaseCode })
+  function setDeptName(deptName) {
+    selectedDeptName.value = deptName
+    setFilterParams({ deptName })
   }
 
   /**
    * 设置搜索关键词
    */
   function setKeyword(keyword) {
-    setFilterParams({ name: keyword || undefined, page: 1 })
+    setFilterParams({ name: keyword || undefined })
+  }
+
+  /**
+   * 设置排序优先级
+   */
+  function setSortPriority(priority) {
+    setFilterParams({ sortPriority: priority })
   }
 
   /**
@@ -109,18 +142,40 @@ export const useHospitalStore = defineStore('hospital', () => {
     setFilterParams({ page, pageSize })
   }
 
+  /**
+   * 重置筛选条件
+   */
+  function resetFilters() {
+    // 重置筛选条件
+    filterParams.value = {
+      page: 1,
+      pageSize: 9,
+      areaCode: undefined,
+      provinceCode: undefined,
+      cityCode: undefined,
+      level: undefined,
+      deptName: undefined,
+      name: undefined,
+      sortPriority: 'level'  // 默认级别优先
+    }
+    selectedArea.value = null
+    selectedDeptName.value = null
+  }
+
   return {
     filterParams,
     apiParams,
     selectedArea,
     selectedLevel,
-    selectedDiseaseCode,
+    selectedDeptName,
+    sortPriority,
     setFilterParams,
-    resetFilters,
     setArea,
     setLevel,
-    setDiseaseCode,
+    setDeptName,
     setKeyword,
-    setPagination
+    setSortPriority,
+    setPagination,
+    resetFilters
   }
 })

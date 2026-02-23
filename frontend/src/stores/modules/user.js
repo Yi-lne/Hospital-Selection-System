@@ -10,6 +10,7 @@ export const useUserStore = defineStore('user', () => {
   // 状态
   const token = ref(AuthManager.getToken() || '')
   const userInfo = ref(AuthManager.getUserInfo())
+  const roles = ref(AuthManager.getUserRoles() || [])
   const isLoading = ref(false)
 
   // 计算属性
@@ -17,6 +18,9 @@ export const useUserStore = defineStore('user', () => {
   const userId = computed(() => userInfo.value?.id || null)
   const userName = computed(() => userInfo.value?.nickname || '用户')
   const userAvatar = computed(() => userInfo.value?.avatar || '')
+  const isAdmin = computed(() => {
+    return roles.value.includes('admin') || roles.value.includes('ADMIN')
+  })
 
   /**
    * 登录
@@ -31,8 +35,12 @@ export const useUserStore = defineStore('user', () => {
       AuthManager.setToken(res.data.token)
 
       // 保存用户信息
-      userInfo.value = res.data.user
-      AuthManager.setUserInfo(res.data.user)
+      userInfo.value = res.data.userInfo
+      AuthManager.setUserInfo(res.data.userInfo)
+
+      // 保存用户角色
+      roles.value = res.data.userInfo.roles || []
+      AuthManager.setUserRoles(res.data.userInfo.roles || [])
     } finally {
       isLoading.value = false
     }
@@ -44,7 +52,19 @@ export const useUserStore = defineStore('user', () => {
   async function register(registerData) {
     try {
       isLoading.value = true
-      await userApi.register(registerData)
+      const res = await userApi.register(registerData)
+
+      // 保存Token（注册成功自动登录）
+      token.value = res.data.token
+      AuthManager.setToken(res.data.token)
+
+      // 保存用户信息
+      userInfo.value = res.data.userInfo
+      AuthManager.setUserInfo(res.data.userInfo)
+
+      // 保存用户角色
+      roles.value = res.data.userInfo.roles || []
+      AuthManager.setUserRoles(res.data.userInfo.roles || [])
     } finally {
       isLoading.value = false
     }
@@ -60,6 +80,7 @@ export const useUserStore = defineStore('user', () => {
       // 清除本地状态
       token.value = ''
       userInfo.value = null
+      roles.value = []
       AuthManager.clearAuth()
     }
   }
@@ -73,7 +94,9 @@ export const useUserStore = defineStore('user', () => {
     try {
       const res = await userApi.getUserInfo()
       userInfo.value = res.data
+      roles.value = res.data.roles || []
       AuthManager.setUserInfo(res.data)
+      AuthManager.setUserRoles(res.data.roles || [])
     } catch (error) {
       // Token可能已过期，清除本地状态
       logout()
@@ -129,6 +152,7 @@ export const useUserStore = defineStore('user', () => {
     // 状态
     token,
     userInfo,
+    roles,
     isLoading,
 
     // 计算属性
@@ -136,6 +160,7 @@ export const useUserStore = defineStore('user', () => {
     userId,
     userName,
     userAvatar,
+    isAdmin,
 
     // 方法
     login,

@@ -51,13 +51,15 @@ public class CommunityController {
     @ApiOperation("话题列表（分页）")
     public Result<PageResult<TopicVO>> getTopicList(@Valid PageQueryDTO dto,
                                                      @RequestParam(required = false) String boardLevel1,
-                                                     @RequestParam(required = false) String boardLevel2) {
+                                                     @RequestParam(required = false) String boardLevel2,
+                                                     @RequestParam(required = false) String sortBy,
+                                                     @RequestParam(required = false) String keyword) {
         PageResult<TopicVO> pageResult;
         // If board parameters are provided, use getTopicsByBoard, otherwise use getTopicList
         if (boardLevel1 != null || boardLevel2 != null) {
-            pageResult = communityService.getTopicsByBoard(boardLevel1, boardLevel2, dto);
+            pageResult = communityService.getTopicsByBoard(boardLevel1, boardLevel2, dto, sortBy, keyword);
         } else {
-            pageResult = communityService.getTopicList(dto);
+            pageResult = communityService.getTopicList(dto, sortBy, keyword);
         }
         return Result.success(pageResult);
     }
@@ -355,15 +357,12 @@ public class CommunityController {
         // For now, return static board list
         List<String> boards = java.util.Arrays.asList(
             "心血管疾病",
-            "内分泌代谢",
+            "内分泌疾病",
+            "呼吸系统疾病",
+            "消化系统疾病",
+            "神经系统疾病",
             "肿瘤科",
-            "儿科疾病",
-            "妇产科",
-            "骨科",
-            "神经科",
-            "呼吸科",
-            "消化科",
-            "泌尿科"
+            "儿科疾病"
         );
         return Result.success(boards);
     }

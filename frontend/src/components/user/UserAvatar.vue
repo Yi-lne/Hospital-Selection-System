@@ -9,25 +9,23 @@
   </el-avatar>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 
-const props = withDefaults(
-  defineProps<{
-    avatar?: string
-    username?: string
-    size?: number | 'large' | 'default' | 'small'
-    shape?: 'circle' | 'square'
-  }>(),
-  {
-    size: 'default',
-    shape: 'circle'
+const props = defineProps({
+  avatar: String,
+  username: String,
+  size: {
+    type: [Number, String],
+    default: 'default'
+  },
+  shape: {
+    type: String,
+    default: 'circle'
   }
-)
+})
 
-const emit = defineEmits<{
-  click: []
-}>()
+const emit = defineEmits(['click'])
 
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 

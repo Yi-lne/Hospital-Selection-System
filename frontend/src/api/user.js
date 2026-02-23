@@ -60,3 +60,31 @@ export function uploadAvatar(file) {
   formData.append('file', file)
   return Request.upload('/user/avatar', formData)
 }
+
+/**
+ * 生成图片验证码
+ */
+export function generateCaptcha() {
+  return Request.post('/captcha/generate')
+}
+
+/**
+ * 验证图片验证码（不删除，用于滑块验证）
+ */
+export function verifyCaptcha(data) {
+  return Request.post('/captcha/verify', data)
+}
+
+/**
+ * 验证并消耗验证码（用于登录/注册）
+ */
+export function verifyAndConsumeCaptcha(data) {
+  return Request.post('/captcha/verify-consume', data)
+}
+
+// 导出验证码API对象
+export const captchaApi = {
+  generate: generateCaptcha,
+  verify: verifyCaptcha,
+  verifyAndConsume: verifyAndConsumeCaptcha
+}

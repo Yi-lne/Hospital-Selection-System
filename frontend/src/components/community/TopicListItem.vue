@@ -12,14 +12,17 @@
         <el-tag v-if="topic.boardLevel1" size="small" type="info">
           {{ topic.boardLevel1 }}
         </el-tag>
-        <el-tag v-if="topic.boardLevel2" size="small">
-          {{ topic.boardLevel2 }}
-        </el-tag>
       </div>
     </div>
 
     <h3 class="topic-title">{{ topic.title }}</h3>
     <p class="topic-content">{{ topic.content }}</p>
+
+    <div v-if="topic.diseaseName || topic.boardLevel1" class="topic-tags">
+      <el-tag v-if="topic.diseaseName" size="small" type="success">
+        {{ topic.diseaseName }}
+      </el-tag>
+    </div>
 
     <div class="item-stats">
       <span class="stat">
@@ -32,7 +35,7 @@
       </span>
       <span class="stat">
         <el-icon><Star /></el-icon>
-        {{ topic.likeCount || 0 }}
+        {{ topic.collectCount || 0 }}
       </span>
     </div>
   </div>

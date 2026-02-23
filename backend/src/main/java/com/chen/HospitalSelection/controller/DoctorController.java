@@ -45,18 +45,21 @@ public class DoctorController {
     }
 
     /**
-     * 医生详情
-     * 接口路径：GET /api/doctor/{id}
+     * 医生搜索
+     * 接口路径：GET /api/doctor/search
      * 是否需要登录：否
      *
-     * @param id 医生ID
-     * @return 医生完整信息
+     * @param keyword 搜索关键词
+     * @param dto 分页查询参数
+     * @return 搜索结果
      */
-    @GetMapping("/{id}")
-    @ApiOperation("医生详情")
-    public Result<DoctorVO> getDoctorDetail(@PathVariable Long id) {
-        DoctorVO doctorVO = doctorService.getDoctorDetail(id);
-        return Result.success(doctorVO);
+    @GetMapping("/search")
+    @ApiOperation("医生搜索")
+    public Result<PageResult<DoctorSimpleVO>> searchDoctors(
+            @RequestParam String keyword,
+            @Valid PageQueryDTO dto) {
+        PageResult<DoctorSimpleVO> pageResult = doctorService.searchDoctors(keyword, dto);
+        return Result.success(pageResult);
     }
 
     /**
@@ -95,12 +98,30 @@ public class DoctorController {
      * 是否需要登录：否
      *
      * @param hospitalId 医院ID
-     * @return 该医院下的所有医生
+     * @param dto 分页查询参数
+     * @return 该医院下的医生列表（分页）
      */
     @GetMapping("/hospital/{hospitalId}")
     @ApiOperation("按医院查询医生")
-    public Result<List<DoctorSimpleVO>> getDoctorsByHospital(@PathVariable Long hospitalId) {
-        List<DoctorSimpleVO> doctors = doctorService.getDoctorsByHospital(hospitalId);
-        return Result.success(doctors);
+    public Result<PageResult<DoctorSimpleVO>> getDoctorsByHospital(
+            @PathVariable Long hospitalId,
+            @Valid PageQueryDTO dto) {
+        PageResult<DoctorSimpleVO> pageResult = doctorService.getDoctorsByHospital(hospitalId, dto);
+        return Result.success(pageResult);
+    }
+
+    /**
+     * 医生详情
+     * 接口路径：GET /api/doctor/{id}
+     * 是否需要登录：否
+     *
+     * @param id 医生ID
+     * @return 医生完整信息
+     */
+    @GetMapping("/{id}")
+    @ApiOperation("医生详情")
+    public Result<DoctorVO> getDoctorDetail(@PathVariable Long id) {
+        DoctorVO doctorVO = doctorService.getDoctorDetail(id);
+        return Result.success(doctorVO);
     }
 }

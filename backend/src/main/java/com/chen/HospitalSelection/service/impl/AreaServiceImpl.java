@@ -51,7 +51,6 @@ public class AreaServiceImpl implements AreaService {
                 List<AreaVO> areaVOList = areaList.stream()
                         .map(this::convertToVO)
                         .collect(Collectors.toList());
-
                 cityVO.setChildren(areaVOList);
                 cityVOList.add(cityVO);
             }
@@ -169,7 +168,11 @@ public class AreaServiceImpl implements AreaService {
      */
     private AreaVO convertToVO(Area area) {
         AreaVO vo = new AreaVO();
-        BeanUtils.copyProperties(area, vo);
+        vo.setId(area.getId());
+        vo.setCode(area.getCode());
+        vo.setName(area.getName());
+        vo.setParentCode(area.getParentCode());
+        vo.setLevel(area.getLevel());
         return vo;
     }
 }

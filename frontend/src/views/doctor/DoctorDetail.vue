@@ -1,107 +1,94 @@
 <template>
-  <div class="doctor-detail-page">
+  <div class="doctor-detail-page" v-loading="loading">
     <el-page-header @back="$router.back()">
       <template #content>
         <span class="page-title">医生详情</span>
       </template>
     </el-page-header>
 
-    <el-card v-loading="loading" class="detail-card">
-      <template v-if="doctor">
-        <!-- 基本信息 -->
-        <div class="doctor-header" v-if="doctor">
-          <el-avatar :size="100" :src="doctor.avatar || defaultAvatar" />
-          <div class="header-info">
-            <h1>{{ doctor.doctorName || '医生姓名' }} <span class="title">{{ doctor.title || '职称' }}</span></h1>
-            <p class="hospital-info">{{ doctor.hospitalName || '医院' }} · {{ doctor.deptName || '科室' }}</p>
-            <div class="tags">
-              <el-tag v-if="doctor.title" type="success">{{ doctor.title }}</el-tag>
-            </div>
+    <el-card v-if="doctor" class="doctor-card">
+      <!-- 医生头部 -->
+      <div class="doctor-header">
+        <el-avatar :size="80" :src="doctor.avatar || defaultAvatar">
+          {{ doctor.doctorName?.charAt(0) || '医' }}
+        </el-avatar>
+        <div class="doctor-info">
+          <h4>{{ doctor.doctorName }}</h4>
+          <p class="title">{{ doctor.title || '医师' }}</p>
+          <p class="department">{{ doctor.hospitalName }} - {{ doctor.deptName }}</p>
+        </div>
+      </div>
+
+      <!-- 医生详情 -->
+      <div class="doctor-details">
+        <div class="detail-section">
+          <h3 class="section-title">基本信息</h3>
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="医生姓名">
+              {{ doctor.doctorName }}
+            </el-descriptions-item>
+            <el-descriptions-item label="职称">
+              {{ doctor.title || '暂无' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="所属医院">
+              {{ doctor.hospitalName }}
+            </el-descriptions-item>
+            <el-descriptions-item label="所属科室">
+              {{ doctor.deptName }}
+            </el-descriptions-item>
+          </el-descriptions>
+        </div>
+
+        <div class="detail-section">
+          <h3 class="section-title">专业信息</h3>
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="专业特长">
+              {{ doctor.specialty || '暂无' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="出诊时间">
+              {{ doctor.scheduleTime || '暂无' }}
+            </el-descriptions-item>
+            <el-descriptions-item label="挂号费">
+              <span class="fee">¥{{ doctor.consultationFee || '0' }}</span>
+            </el-descriptions-item>
+          </el-descriptions>
+        </div>
+
+        <div class="detail-section">
+          <h3 class="section-title">评价信息</h3>
+          <div class="rating-info">
+            <el-rate v-model="displayRating" disabled show-score text-color="#ff9900" />
+            <span class="rating-text">{{ displayRating }} 分</span>
+            <span class="review-count">({{ doctor.reviewCount || 0 }}条评价)</span>
           </div>
-          <el-button
-            :type="isCollected ? 'warning' : 'primary'"
-            :icon="isCollected ? StarFilled : Star"
-            size="large"
-            @click="toggleCollect"
-          >
-            {{ isCollected ? '已收藏' : '收藏' }}
+        </div>
+
+        <div class="action-section">
+          <el-button type="primary" @click="handleCollect" v-if="!isCollected">
+            <el-icon><Star /></el-icon>
+            <span>收藏医生</span>
           </el-button>
+          <el-button type="primary" @click="handleCancelCollect" v-else>
+            <el-icon><StarFilled /></el-icon>
+            <span>取消收藏</span>
+          </el-button>
+          <el-button type="primary" @click="goBack">返回</el-button>
         </div>
-
-        <el-divider />
-
-        <!-- 详细信息 -->
-        <el-descriptions :column="2" border v-if="doctor">
-          <el-descriptions-item label="所属医院">
-            {{ doctor.hospitalName || '暂无' }}
-          </el-descriptions-item>
-          <el-descriptions-item label="所属科室">
-            {{ doctor.deptName || '暂无' }}
-          </el-descriptions-item>
-          <el-descriptions-item label="职称">
-            {{ doctor.title || '暂无' }}
-          </el-descriptions-item>
-          <el-descriptions-item label="挂号费">
-            {{ doctor.consultationFee ? `¥${doctor.consultationFee}` : '暂无' }}
-          </el-descriptions-item>
-        </el-descriptions>
-
-        <!-- 擅长领域 -->
-        <div v-if="doctor.specialty" class="section">
-          <h3>擅长领域</h3>
-          <p>{{ doctor.specialty }}</p>
-        </div>
-
-        <!-- 学术背景 -->
-        <div v-if="doctor.academicBackground" class="section">
-          <h3>学术背景</h3>
-          <p>{{ doctor.academicBackground }}</p>
-        </div>
-
-        <!-- 出诊时间 -->
-        <div v-if="doctor.scheduleTime" class="section">
-          <h3>出诊时间</h3>
-          <p>{{ doctor.scheduleTime }}</p>
-        </div>
-
-        <!-- 同医院医生 -->
-        <div class="section">
-          <div class="section-header">
-            <h3>同医院医生</h3>
-            <el-link type="primary" @click="$router.push(`/doctor?hospitalId=${doctor.hospitalId}`)">
-              查看全部 →
-            </el-link>
-          </div>
-          <el-row v-if="relatedDoctors.length > 0" :gutter="16">
-            <el-col v-for="doc in relatedDoctors" :key="doc.id" :xs="24" :sm="12" :md="8">
-              <DoctorCard :doctor="doc" />
-            </el-col>
-          </el-row>
-          <Empty v-else description="暂无相关医生" />
-        </div>
-      </template>
+      </div>
     </el-card>
+
+    <Empty v-else description="医生信息不存在" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Star, StarFilled } from '@element-plus/icons-vue'
 import { getDoctorDetail } from '@/api/doctor'
-import { getHospitalDoctors } from '@/api/doctor'
 import { checkCollected, addCollection, cancelCollection } from '@/api/collection'
-import DoctorCard from '@/components/doctor/DoctorCard.vue'
 import Empty from '@/components/common/Empty.vue'
-
-const route = useRoute()
-
-const loading = ref(false)
-const doctor = ref(null)
-const relatedDoctors = ref([])
-const isCollected = ref(false)
-const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 
 // 收藏类型常量（1=医院，2=医生，3=话题）
 const COLLECTION_TYPE = {
@@ -110,141 +97,240 @@ const COLLECTION_TYPE = {
   TOPIC: 3
 }
 
+const route = useRoute()
+const router = useRouter()
+
+const loading = ref(false)
+const doctor = ref(null)
+const isCollected = ref(false)
+
+const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+
+// 显示评分
+const displayRating = computed(() => {
+  return doctor.value?.rating || 0
+})
+
 // 加载医生详情
 const loadDoctorDetail = async () => {
   try {
     loading.value = true
-    const id = Number(route.params.id)
-    const res = await getDoctorDetail(id)
-    doctor.value = res.data
+    const doctorId = route.params.id
+    const res = await getDoctorDetail(doctorId)
 
-    // 调试：打印返回的数据
-    console.log('医生详情数据:', doctor.value)
-
-    // 加载同医院医生
-    if (doctor.value?.hospitalId) {
-      const doctorRes = await getHospitalDoctors(doctor.value.hospitalId, 1, 6)
-      // 确保数据结构正确
-      if (doctorRes.data && doctorRes.data.list && Array.isArray(doctorRes.data.list)) {
-        relatedDoctors.value = doctorRes.data.list.filter(d => d.id !== id)
+    if (res.code === 200 && res.data) {
+      doctor.value = {
+        id: res.data.id,
+        doctorName: res.data.doctorName || res.data.name,
+        title: res.data.title,
+        hospitalName: res.data.hospitalName,
+        deptName: res.data.deptName || res.data.departmentName,
+        specialty: res.data.specialty,
+        scheduleTime: res.data.scheduleTime,
+        consultationFee: res.data.consultationFee,
+        rating: res.data.rating,
+        reviewCount: res.data.reviewCount,
+        avatar: res.data.avatar,
+        hospitalId: res.data.hospitalId,
+        deptId: res.data.deptId
       }
-    }
 
-    // 检查收藏状态
-    if (doctor.value) {
-      const collectRes = await checkCollected(COLLECTION_TYPE.DOCTOR, doctor.value.id)
-      isCollected.value = collectRes.data
+      // 检查是否已收藏
+      const collectionRes = await checkCollected(COLLECTION_TYPE.DOCTOR, doctorId)
+      isCollected.value = collectionRes.code === 200 && collectionRes.data === true
+    } else {
+      ElMessage.error(res.message || '加载医生详情失败')
+      doctor.value = null
     }
   } catch (error) {
-    console.error('Failed to load doctor detail:', error)
+    console.error('加载医生详情失败:', error)
     ElMessage.error('加载医生详情失败')
   } finally {
     loading.value = false
   }
 }
 
-// 切换收藏
-const toggleCollect = async () => {
-  if (!doctor.value) return
-
+// 收藏医生
+const handleCollect = async () => {
   try {
-    if (isCollected.value) {
-      await cancelCollection({
-        targetType: COLLECTION_TYPE.DOCTOR,
-        targetId: doctor.value.id
-      })
-      ElMessage.success('取消收藏成功')
-    } else {
-      await addCollection({
-        targetType: COLLECTION_TYPE.DOCTOR,
-        targetId: doctor.value.id
-      })
+    const res = await addCollection({
+      targetType: COLLECTION_TYPE.DOCTOR,
+      targetId: doctor.value.id
+    })
+    if (res.code === 200) {
       ElMessage.success('收藏成功')
+      isCollected.value = true
+    } else {
+      ElMessage.error(res.message || '收藏失败')
     }
-    isCollected.value = !isCollected.value
   } catch (error) {
-    console.error('Failed to toggle collection:', error)
-    ElMessage.error('操作失败')
+    console.error('收藏医生失败:', error)
+    ElMessage.error('收藏失败')
+  }
+}
+
+// 取消收藏
+const handleCancelCollect = async () => {
+  try {
+    const res = await cancelCollection({
+      targetType: COLLECTION_TYPE.DOCTOR,
+      targetId: doctor.value.id
+    })
+    if (res.code === 200) {
+      ElMessage.success('取消收藏成功')
+      isCollected.value = false
+    } else {
+      ElMessage.error(res.message || '取消收藏失败')
+    }
+  } catch (error) {
+    console.error('取消收藏失败:', error)
+    ElMessage.error('取消收藏失败')
+  }
+}
+
+// 返回上一页
+const goBack = () => {
+  try {
+    const storageKey = 'doctor_detail_source_info'
+    const sourceInfo = sessionStorage.getItem(storageKey)
+
+    if (sourceInfo) {
+      try {
+        const { from, tab } = JSON.parse(sourceInfo)
+
+        if (from === 'myCollection' && tab === 'doctor') {
+          // 从收藏的医生Tab进入，返回时携带 Tab 参数
+          router.push({
+            path: '/user/collection',
+            query: { activeTab: 'doctor' }
+          })
+          return
+        }
+      } catch (e) {
+        console.error('解析来源信息失败:', e)
+      }
+    }
+
+    // 默认返回
+    router.back()
+  } catch (error) {
+    console.error('返回失败:', error)
+    router.back()
   }
 }
 
 onMounted(() => {
   loadDoctorDetail()
 })
+
+// 监听路由变化，同步更新 sessionStorage
+watch(() => route.query, (newQuery) => {
+  if (newQuery.from === 'myCollection' && newQuery.tab) {
+    const storageKey = 'doctor_detail_source_info'
+    sessionStorage.setItem(storageKey, JSON.stringify({
+      from: 'myCollection',
+      tab: newQuery.tab
+    }))
+  }
+}, { immediate: true })
 </script>
 
 <style scoped lang="scss">
 .doctor-detail-page {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+
   .page-title {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 600;
   }
 
-  .detail-card {
-    margin-top: 20px;
-  }
+  .doctor-card {
+    max-width: 1200px;
+    margin: 20px auto;
 
-  .doctor-header {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
+    .doctor-header {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 8px;
 
-    .header-info {
-      flex: 1;
+      .el-avatar {
+        flex-shrink: 0;
+      }
 
-      h1 {
-        margin: 0 0 8px 0;
-        font-size: 24px;
-        font-weight: 600;
+      .doctor-info {
+        flex: 1;
+        color: #fff;
+
+        h4 {
+          margin: 0 0 8px 0;
+          font-size: 20px;
+          font-weight: 600;
+        }
 
         .title {
-          font-size: 18px;
-          font-weight: 400;
-          color: #606266;
-          margin-left: 12px;
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.8);
+          margin: 0;
+        }
+
+        .department {
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.7);
         }
       }
-
-      .hospital-info {
-        margin: 0 0 12px 0;
-        color: #909399;
-        font-size: 14px;
-      }
-
-      .tags {
-        margin-top: 12px;
-      }
     }
-  }
 
-  .section {
-    margin-top: 24px;
+    .doctor-details {
+      padding: 20px;
+    }
 
-    h3 {
-      margin: 0 0 12px 0;
+    .section-title {
       font-size: 16px;
       font-weight: 600;
       color: #303133;
+      margin: 0 0 20px 0;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e4e7ed;
     }
 
-    p {
-      margin: 0;
-      line-height: 1.8;
-      color: #606266;
+    .detail-section {
+      margin-bottom: 30px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    .rating-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+      background: #f5f7fa;
+      border-radius: 8px;
+    }
+
+    .action-section {
+      display: flex;
+      gap: 12px;
+      padding: 20px;
+      justify-content: center;
+
+      .el-button {
+        flex: 1;
+      }
     }
   }
 
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-
-    h3 {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 600;
-    }
+  .fee {
+    font-size: 20px;
+    font-weight: 600;
+    color: #f56c6c;
   }
 }
 </style>

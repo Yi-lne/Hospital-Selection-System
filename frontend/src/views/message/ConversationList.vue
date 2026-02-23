@@ -33,23 +33,23 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getConversations } from '@/api/message'
 import { useMessageStore } from '@/stores'
 import { formatRelativeTime } from '@/utils/date'
 import Empty from '@/components/common/Empty.vue'
-import type { Conversation } from '@/types/message'
+
 
 const router = useRouter()
 const messageStore = useMessageStore()
 
 const loading = ref(false)
-const conversations = ref<Conversation[]>([])
+const conversations = ref([])
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 
-const formatTime = (time: string) => {
+const formatTime = (time) => {
   return formatRelativeTime(time)
 }
 
@@ -61,14 +61,14 @@ const loadConversations = async () => {
     conversations.value = res.data
     messageStore.setConversations(res.data)
   } catch (error) {
-    console.error('Failed to load conversations:', error)
+    console.error('加载会话列表失败:', error)
   } finally {
     loading.value = false
   }
 }
 
 // 打开聊天
-const openChat = (conv: Conversation) => {
+const openChat = (conv) => {
   router.push(`/message/chat/${conv.userId}`)
 }
 

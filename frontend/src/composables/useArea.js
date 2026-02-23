@@ -17,7 +17,7 @@ export function useArea() {
       const res = await getAreaTree()
       areas.value = res.data
     } catch (error) {
-      console.error('Failed to load areas:', error)
+      console.error('加载地区失败:', error)
     } finally {
       loading.value = false
     }

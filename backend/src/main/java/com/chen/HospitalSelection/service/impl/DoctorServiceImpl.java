@@ -36,11 +36,20 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     public PageResult<DoctorSimpleVO> getDoctorList(PageQueryDTO dto) {
-        log.info("分页查询医生列表，页码：{}，每页大小：{}", dto.getPage(), dto.getPageSize());
+        log.info("分页查询医生列表，页码：{}，每页大小：{}，包含已删除：{}",
+                dto.getPage(), dto.getPageSize(), dto.getIncludeDeleted());
 
         // 使用PageHelper进行物理分页
         PageHelper.startPage(dto.getPage(), dto.getPageSize());
-        List<Doctor> doctorList = doctorMapper.selectAll();
+
+        List<Doctor> doctorList;
+        Boolean includeDeleted = dto.getIncludeDeleted();
+        if (includeDeleted != null && includeDeleted) {
+            doctorList = doctorMapper.selectAllIncludingDeleted(true);
+        } else {
+            doctorList = doctorMapper.selectAll();
+        }
+
         PageInfo<Doctor> pageInfo = new PageInfo<>(doctorList);
 
         List<DoctorSimpleVO> voList = doctorList.stream()
@@ -98,14 +107,28 @@ public class DoctorServiceImpl implements DoctorService {
     }
 
     @Override
-    public List<DoctorSimpleVO> getDoctorsByHospital(Long hospitalId) {
-        log.info("查询医院医生列表，医院ID：{}", hospitalId);
+    public PageResult<DoctorSimpleVO> getDoctorsByHospital(Long hospitalId, PageQueryDTO dto) {
+        log.info("查询医院医生列表，医院ID：{}，页码：{}，每页大小：{}，包含已删除：{}",
+                hospitalId, dto.getPage(), dto.getPageSize(), dto.getIncludeDeleted());
 
-        List<Doctor> doctorList = doctorMapper.selectByHospitalId(hospitalId);
+        // 使用PageHelper进行物理分页
+        PageHelper.startPage(dto.getPage(), dto.getPageSize());
 
-        return doctorList.stream()
+        List<Doctor> doctorList;
+        Boolean includeDeleted = dto.getIncludeDeleted();
+        if (includeDeleted != null && includeDeleted) {
+            doctorList = doctorMapper.selectByHospitalIdIncludingDeleted(hospitalId, true);
+        } else {
+            doctorList = doctorMapper.selectByHospitalId(hospitalId);
+        }
+
+        PageInfo<Doctor> pageInfo = new PageInfo<>(doctorList);
+
+        List<DoctorSimpleVO> voList = doctorList.stream()
                 .map(this::convertToSimpleVO)
                 .collect(Collectors.toList());
+
+        return new PageResult<>(pageInfo.getTotal(), dto.getPage(), dto.getPageSize(), voList);
     }
 
     @Override
@@ -120,12 +143,31 @@ public class DoctorServiceImpl implements DoctorService {
     }
 
     @Override
+    public List<DoctorSimpleVO> getDoctorsByHospitalAndDeptName(Long hospitalId, String deptName) {
+        log.info("查询医院科室医生列表（按科室名称），医院ID：{}，科室名称：{}", hospitalId, deptName);
+
+        List<Doctor> doctorList = doctorMapper.selectByHospitalAndDeptName(hospitalId, deptName);
+
+        return doctorList.stream()
+                .map(this::convertToSimpleVO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public PageResult<DoctorSimpleVO> searchDoctors(String keyword, PageQueryDTO dto) {
-        log.info("搜索医生，关键词：{}", keyword);
+        log.info("搜索医生，关键词：{}，包含已删除：{}", keyword, dto.getIncludeDeleted());
 
         // 使用PageHelper进行物理分页
         PageHelper.startPage(dto.getPage(), dto.getPageSize());
-        List<Doctor> doctorList = doctorMapper.searchByKeyword(keyword);
+
+        List<Doctor> doctorList;
+        Boolean includeDeleted = dto.getIncludeDeleted();
+        if (includeDeleted != null && includeDeleted) {
+            doctorList = doctorMapper.searchByKeyword(keyword, true);
+        } else {
+            doctorList = doctorMapper.searchByKeyword(keyword, false);
+        }
+
         PageInfo<Doctor> pageInfo = new PageInfo<>(doctorList);
 
         List<DoctorSimpleVO> voList = doctorList.stream()
@@ -153,6 +195,8 @@ public class DoctorServiceImpl implements DoctorService {
     private DoctorSimpleVO convertToSimpleVO(Doctor doctor) {
         DoctorSimpleVO vo = new DoctorSimpleVO();
         BeanUtils.copyProperties(doctor, vo);
+        // 手动处理isDeleted字段：Integer(0/1) -> Boolean(false/true)
+        vo.setIsDeleted(doctor.getIsDeleted() != null && doctor.getIsDeleted() == 1);
         return vo;
     }
 

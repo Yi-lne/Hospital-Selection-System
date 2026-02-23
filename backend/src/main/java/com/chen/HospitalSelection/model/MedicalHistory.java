@@ -40,6 +40,16 @@ public class MedicalHistory {
     private Integer status;
 
     /**
+     * 就诊医院名称
+     */
+    private String hospitalName;
+
+    /**
+     * 医生姓名
+     */
+    private String doctorName;
+
+    /**
      * 逻辑删除（0=未删，1=已删）
      */
     private Integer isDeleted;

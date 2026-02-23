@@ -8,13 +8,10 @@
 const HOSPITAL_LEVEL_MAP = {
   'grade3A': '三甲',
   'grade3B': '三乙',
-  'grade3C': '三丙',
   'grade2A': '二甲',
   'grade2B': '二乙',
   'grade2C': '二丙',
-  'grade1A': '一甲',
-  'grade1B': '一乙',
-  'grade1C': '一丙'
+  'grade1A': '一甲'
 }
 
 /**
@@ -23,13 +20,10 @@ const HOSPITAL_LEVEL_MAP = {
 const CHINESE_TO_LEVEL_MAP = {
   '三甲': 'grade3A',
   '三乙': 'grade3B',
-  '三丙': 'grade3C',
   '二甲': 'grade2A',
   '二乙': 'grade2B',
   '二丙': 'grade2C',
-  '一甲': 'grade1A',
-  '一乙': 'grade1B',
-  '一丙': 'grade1C'
+  '一甲': 'grade1A'
 }
 
 /**
@@ -58,15 +52,12 @@ export function chineseToLevelCode(chineseLevel) {
  */
 export function getHospitalLevelOptions() {
   return [
-    { label: '三级甲等', value: 'grade3A' },
-    { label: '三级乙等', value: 'grade3B' },
-    { label: '三级丙等', value: 'grade3C' },
-    { label: '二级甲等', value: 'grade2A' },
-    { label: '二级乙等', value: 'grade2B' },
-    { label: '二级丙等', value: 'grade2C' },
-    { label: '一级甲等', value: 'grade1A' },
-    { label: '一级乙等', value: 'grade1B' },
-    { label: '一级丙等', value: 'grade1C' }
+    { label: '三甲', value: 'grade3A' },
+    { label: '三乙', value: 'grade3B' },
+    { label: '二甲', value: 'grade2A' },
+    { label: '二乙', value: 'grade2B' },
+    { label: '二丙', value: 'grade2C' },
+    { label: '一甲', value: 'grade1A' }
   ]
 }
 
@@ -77,7 +68,7 @@ export function getHospitalLevelOptions() {
  * @returns {number} -1, 0, 或 1
  */
 export function compareHospitalLevel(level1, level2) {
-  const levelOrder = ['grade3A', 'grade3B', 'grade3C', 'grade2A', 'grade2B', 'grade2C', 'grade1A', 'grade1B', 'grade1C']
+  const levelOrder = ['grade3A', 'grade3B', 'grade2A', 'grade2B', 'grade2C', 'grade1A']
   const index1 = levelOrder.indexOf(level1)
   const index2 = levelOrder.indexOf(level2)
   if (index1 === -1 && index2 === -1) return 0

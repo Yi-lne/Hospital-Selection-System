@@ -28,15 +28,15 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted } from 'vue'
 import { getMyTopics } from '@/api/community'
 import TopicCard from '@/components/community/TopicCard.vue'
 import Empty from '@/components/common/Empty.vue'
-import type { Topic } from '@/types/community'
+
 
 const loading = ref(false)
-const topicList = ref<Topic[]>([])
+const topicList = ref([])
 const total = ref(0)
 const page = ref(1)
 const pageSize = ref(10)
@@ -49,14 +49,14 @@ const loadTopics = async () => {
     topicList.value = res.data.list
     total.value = res.data.total
   } catch (error) {
-    console.error('Failed to load topics:', error)
+    console.error('加载话题失败:', error)
   } finally {
     loading.value = false
   }
 }
 
 // 分页大小改变
-const handleSizeChange = (size: number) => {
+const handleSizeChange = (size) => {
   page.value = 1
   pageSize.value = size
   loadTopics()

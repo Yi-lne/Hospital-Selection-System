@@ -24,9 +24,11 @@ public interface CommunityService {
      * 分页查询话题列表
      *
      * @param dto 分页查询参数
+     * @param sortBy 排序方式（hot=热门，latest=最新）
+     * @param keyword 搜索关键词
      * @return 话题分页列表
      */
-    PageResult<TopicVO> getTopicList(PageQueryDTO dto);
+    PageResult<TopicVO> getTopicList(PageQueryDTO dto, String sortBy, String keyword);
 
     /**
      * 根据板块查询话题列表
@@ -34,9 +36,11 @@ public interface CommunityService {
      * @param boardLevel1 一级板块（可选）
      * @param boardLevel2 二级板块（可选）
      * @param dto         分页查询参数
+     * @param sortBy      排序方式（hot=热门，latest=最新）
+     * @param keyword     搜索关键词
      * @return 话题分页列表
      */
-    PageResult<TopicVO> getTopicsByBoard(String boardLevel1, String boardLevel2, PageQueryDTO dto);
+    PageResult<TopicVO> getTopicsByBoard(String boardLevel1, String boardLevel2, PageQueryDTO dto, String sortBy, String keyword);
 
     /**
      * 根据疾病编码查询话题列表

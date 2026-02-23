@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>地区筛选测试</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f5f5f5;
+      border-radius: 4px;
+    }
+    code {
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <h1>医院地区筛选测试</h1>
+
+  <div class="test-section">
+    <h2>测试步骤</h2>
+    <ol>
+      <li>打开浏览器开发者工具（F12）</li>
+      <li>切换到 Console 选项卡</li>
+      <li>在应用中进行以下测试</li>
+    </ol>
+  </div>
+
+  <div class="test-section">
+    <h2>测试1：只选择省份</h2>
+    <p>步骤：在医院列表页面的地区选择器中，只选择"北京市"，然后观察控制台输出</p>
+    <p>预期结果：</p>
+    <ul>
+      <li>Area changed: ["110000"]</li>
+      <li>apiParams 应包含：provinceCode: "110000", cityCode: undefined, areaCode: undefined</li>
+      <li>API请求体应该只包含 provinceCode</li>
+    </ul>
+  </div>
+
+  <div class="test-section">
+    <h2>测试2：选择省份+城市</h2>
+    <p>步骤：选择"北京市" → "市辖区"</p>
+    <p>预期结果：</p>
+    <ul>
+      <li>Area changed: ["110000", "110100"]</li>
+      <li>apiParams 应包含：provinceCode: "110000", cityCode: "110100", areaCode: undefined</li>
+    </ul>
+  </div>
+
+  <div class="test-section">
+    <h2>测试3：选择省份+城市+区县</h2>
+    <p>步骤：选择"北京市" → "市辖区" → "东城区"</p>
+    <p>预期结果：</p>
+    <ul>
+      <li>Area changed: ["110000", "110100", "110101"]</li>
+      <li>apiParams 应包含：provinceCode: "110000", cityCode: "110100", areaCode: "110101"</li>
+    </ul>
+  </div>
+
+  <div class="test-section">
+    <h2>检查控制台输出</h2>
+    <p>在控制台中查找以下日志：</p>
+    <pre><code>=== Loading hospitals ===
+filterParams: {page: 1, pageSize: 10, provinceCode: "110000", cityCode: undefined, areaCode: undefined, ...}
+apiParams: {page: 1, pageSize: 10, provinceCode: "110000", cityCode: undefined, areaCode: undefined, ...}
+Has filter conditions: true
+Using filterHospitals API
+Request body: {"page":1,"pageSize":10,"provinceCode":"110000",...}</code></pre>
+  </div>
+
+  <div class="test-section">
+    <h2>问题排查</h2>
+    <p>如果还是不行，请检查：</p>
+    <ol>
+      <li>确认 <code>change-on-select</code> 属性已添加到级联选择器</li>
+      <li>确认 <code>handleAreaChange</code> 函数正确设置了 provinceCode/cityCode/areaCode</li>
+      <li>确认 API 请求体包含了正确的参数</li>
+      <li>查看 Network 选项卡，确认 API 请求参数</li>
+    </ol>
+  </div>
+
+  <div class="test-section">
+    <h2>API直接测试</h2>
+    <p>可以使用 curl 或 Postman 直接测试后端API：</p>
+    <pre><code># 测试只选择省份
+curl -X POST http://localhost:8080/api/hospital/filter \
+  -H "Content-Type: application/json" \
+  -d '{
+    "page": 1,
+    "pageSize": 10,
+    "provinceCode": "110000"
+  }'
+
+# 测试选择省份+城市
+curl -X POST http://localhost:8080/api/hospital/filter \
+  -H "Content-Type: application/json" \
+  -d '{
+    "page": 1,
+    "pageSize": 10,
+    "provinceCode": "110000",
+    "cityCode": "110100"
+  }'</code></pre>
+  </div>
+
+  <div class="test-section">
+    <h2>浏览器控制台命令</h2>
+    <p>在浏览器控制台中执行以下命令来检查状态：</p>
+    <pre><code>// 检查级联选择器配置
+document.querySelector('.el-cascader').__vueParentComponent.props.changeOnSelect
+
+// 手动触发地区选择
+// 在应用中：点击地区选择器，只选择第一级，然后检查控制台输出</code></pre>
+  </div>
+</body>
+</html>

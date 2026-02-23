@@ -113,7 +113,7 @@ const loadDiseaseTree = async () => {
     const res = await getDiseaseTree()
     diseaseOptions.value = res.data || []
   } catch (error) {
-    console.error('Failed to load disease tree:', error)
+    console.error('加载疾病树失败:', error)
   }
 }
 
@@ -123,7 +123,7 @@ const loadAreaTree = async () => {
     const res = await getAreaTree()
     areaOptions.value = res.data || []
   } catch (error) {
-    console.error('Failed to load area tree:', error)
+    console.error('加载地区树失败:', error)
   }
 }
 

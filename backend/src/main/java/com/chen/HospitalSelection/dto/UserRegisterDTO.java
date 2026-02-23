@@ -4,6 +4,7 @@ import lombok.Data;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -47,4 +48,18 @@ public class UserRegisterDTO implements Serializable {
      */
     @Schema(description = "验证码", example = "123456")
     private String code;
+
+    /**
+     * 图片验证码ID
+     */
+    @NotBlank(message = "验证码ID不能为空")
+    @Schema(description = "验证码ID", example = "1234567890-1234", required = true)
+    private String captchaId;
+
+    /**
+     * 滑块移动距离
+     */
+    @NotNull(message = "滑块移动距离不能为空")
+    @Schema(description = "滑块移动距离", example = "150", required = true)
+    private Integer moveX;
 }

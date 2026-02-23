@@ -56,6 +56,11 @@ public class DoctorSimpleVO {
     private String specialty;
 
     /**
+     * 学术背景（学历、研究方向等）
+     */
+    private String academicBackground;
+
+    /**
      * 坐诊时间
      */
     private String scheduleTime;
@@ -74,6 +79,11 @@ public class DoctorSimpleVO {
      * 评价数量
      */
     private Integer reviewCount;
+
+    /**
+     * 是否已删除（逻辑删除）
+     */
+    private Boolean isDeleted;
 
     /**
      * 是否已收藏

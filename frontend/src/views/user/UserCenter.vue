@@ -51,10 +51,6 @@
             <el-icon><Document /></el-icon>
             <span>病史管理</span>
           </el-menu-item>
-          <el-menu-item index="query-history">
-            <el-icon><Clock /></el-icon>
-            <span>查询历史</span>
-          </el-menu-item>
           <el-menu-item index="messages">
             <el-icon><ChatLineSquare /></el-icon>
             <span>私信消息</span>
@@ -140,8 +136,8 @@
               <el-button :icon="Search" @click="$router.push('/hospital')">
                 查找医院
               </el-button>
-              <el-button :icon="User" @click="$router.push('/doctor')">
-                查找医生
+              <el-button :icon="Star" @click="$router.push('/user/collection')">
+                我的收藏
               </el-button>
             </div>
           </div>
@@ -156,7 +152,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
-  User, Star, ChatDotRound, Document, Clock, ChatLineSquare,
+  User, Star, ChatDotRound, Document, ChatLineSquare,
   View, Edit, Search
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores'
@@ -186,7 +182,6 @@ const activeMenu = computed(() => {
   if (path.includes('/user/collection')) return 'collection'
   if (path.includes('/user/topics')) return 'topics'
   if (path.includes('/user/medical-history')) return 'medical-history'
-  if (path.includes('/user/query-history')) return 'query-history'
   if (path.includes('/message')) return 'messages'
   return ''
 })
@@ -237,7 +232,7 @@ const loadStats = async () => {
     stats.commentCount = 0
     stats.viewCount = 0
   } catch (error) {
-    console.error('Failed to load stats:', error)
+    console.error('加载统计数据失败:', error)
   }
 }
 
@@ -248,7 +243,6 @@ const handleMenuSelect = (index) => {
     collection: '/user/collection',
     topics: '/user/topics',
     'medical-history': '/user/medical-history',
-    'query-history': '/user/query-history',
     messages: '/message/conversations'
   }
   if (routes[index]) {

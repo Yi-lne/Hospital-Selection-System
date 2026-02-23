@@ -11,19 +11,19 @@ export function getAreaTree() {
  * 获取省份列表
  */
 export function getProvinces() {
-  return Request.get('/area/provinces')
+  return Request.get('/area/province')
 }
 
 /**
  * 获取城市列表
  */
-export function getCities(parentId) {
-  return Request.get(`/area/cities/${parentId}`)
+export function getCities(provinceCode) {
+  return Request.get(`/area/city/${provinceCode}`)
 }
 
 /**
  * 获取区县列表
  */
-export function getDistricts(parentId) {
-  return Request.get(`/area/districts/${parentId}`)
+export function getDistricts(cityCode) {
+  return Request.get(`/area/area/${cityCode}`)
 }

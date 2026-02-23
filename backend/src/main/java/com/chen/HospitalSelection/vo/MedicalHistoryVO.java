@@ -52,6 +52,16 @@ public class MedicalHistoryVO {
     private String statusDesc;
 
     /**
+     * 就诊医院名称
+     */
+    private String hospitalName;
+
+    /**
+     * 医生姓名
+     */
+    private String doctorName;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;

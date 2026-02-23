@@ -20,7 +20,7 @@ export function addMedicalHistory(data) {
  * 更新病史
  */
 export function updateMedicalHistory(id, data) {
-  return Request.put(`/medical-history/${id}`, data)
+  return Request.put(`/medical-history/update/${id}`, data)
 }
 
 /**

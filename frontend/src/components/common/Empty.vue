@@ -13,18 +13,16 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { Box } from '@element-plus/icons-vue'
 
-defineProps<{
-  description?: string
-  showAction?: boolean
-  actionText?: string
-}>()
+defineProps({
+  description: String,
+  showAction: { type: Boolean, default: false },
+  actionText: { type: String, default: '' }
+})
 
-defineEmits<{
-  action: []
-}>()
+defineEmits(['action'])
 </script>
 
 <style scoped lang="scss">

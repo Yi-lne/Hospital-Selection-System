@@ -36,4 +36,14 @@ public class Department {
      * 逻辑删除（0=未删，1=已删）
      */
     private Integer isDeleted;
+
+    /**
+     * 创建时间
+     */
+    private java.time.LocalDateTime createTime;
+
+    /**
+     * 更新时间
+     */
+    private java.time.LocalDateTime updateTime;
 }

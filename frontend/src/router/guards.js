@@ -19,6 +19,7 @@ export function setupRouterGuards(router) {
 
       // 检查是否需要登录
       const requiresAuth = to.meta.requiresAuth
+      const requiresAdmin = to.meta.requiresAdmin
       const userStore = useUserStore()
       const isLogin = AuthManager.isLoggedIn()
 
@@ -28,6 +29,9 @@ export function setupRouterGuards(router) {
           name: 'Login',
           query: { redirect: to.fullPath }
         })
+      } else if (requiresAdmin && !userStore.isAdmin) {
+        // 需要管理员权限但不是管理员，跳转到首页并提示
+        next({ name: 'Home' })
       } else if ((to.name === 'Login' || to.name === 'Register') && isLogin) {
         // 已登录用户访问登录/注册页，跳转到首页
         next({ name: 'Home' })
@@ -35,7 +39,7 @@ export function setupRouterGuards(router) {
         next()
       }
     } catch (error) {
-      console.error('Router beforeEach error:', error)
+      console.error('路由前置守卫错误:', error)
       NProgress.done()
       next() // 确保即使出错也继续导航
     }
@@ -46,13 +50,13 @@ export function setupRouterGuards(router) {
     try {
       NProgress.done()
     } catch (error) {
-      console.error('Router afterEach error:', error)
+      console.error('路由后置守卫错误:', error)
     }
   })
 
   // 错误处理
   router.onError((error) => {
-    console.error('Router error:', error)
+    console.error('路由错误:', error)
     NProgress.done()
 
     // 如果是 DOM 相关错误，通常是因为组件还未挂载，可以忽略

@@ -75,6 +75,24 @@ public interface HospitalMapper {
     List<Hospital> searchByKeyword(@Param("keyword") String keyword);
 
     /**
+     * 模糊搜索医院（按名称、重点科室，可选择是否包含已删除）
+     * @param keyword 关键词
+     * @param includeDeleted 是否包含已删除的医院
+     * @return 医院列表
+     */
+    List<Hospital> searchByKeywordIncludingDeleted(
+            @Param("keyword") String keyword,
+            @Param("includeDeleted") Boolean includeDeleted
+    );
+
+    /**
+     * 查询所有医院（包含已删除）
+     * @param includeDeleted 是否包含已删除
+     * @return 医院列表
+     */
+    List<Hospital> selectAllIncludingDeleted(@Param("includeDeleted") Boolean includeDeleted);
+
+    /**
      * 根据动态条件查询医院
      * @param hospitalLevel 医院等级
      * @param provinceCode 省份编码
@@ -82,6 +100,8 @@ public interface HospitalMapper {
      * @param areaCode 区域编码
      * @param isMedicalInsurance 是否医保定点
      * @param keyDepartments 重点科室
+     * @param deptName 科室名称
+     * @param sortBy 排序方式（level=级别优先，rating=评分优先）
      * @return 医院列表
      */
     List<Hospital> selectByCondition(
@@ -90,7 +110,9 @@ public interface HospitalMapper {
             @Param("cityCode") String cityCode,
             @Param("areaCode") String areaCode,
             @Param("isMedicalInsurance") Integer isMedicalInsurance,
-            @Param("keyDepartments") String keyDepartments
+            @Param("keyDepartments") String keyDepartments,
+            @Param("deptName") String deptName,
+            @Param("sortBy") String sortBy
     );
 
     /**

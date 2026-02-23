@@ -10,6 +10,8 @@
         <result column="disease_name" property="diseaseName"/>
         <result column="diagnosis_date" property="diagnosisDate"/>
         <result column="status" property="status"/>
+        <result column="hospital_name" property="hospitalName"/>
+        <result column="doctor_name" property="doctorName"/>
         <result column="is_deleted" property="isDeleted"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
@@ -17,7 +19,7 @@
 
     <!-- 基础查询字段 -->
     <sql id="Base_Column_List">
-        id, user_id, disease_name, diagnosis_date, status, is_deleted, create_time, update_time
+        id, user_id, disease_name, diagnosis_date, status, hospital_name, doctor_name, is_deleted, create_time, update_time
     </sql>
 
     <!-- 根据ID查询 -->
@@ -124,8 +126,8 @@
 
     <!-- 插入病史记录 -->
     <insert id="insert" parameterType="com.chen.HospitalSelection.model.MedicalHistory" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO user_medical_history (user_id, disease_name, diagnosis_date, status, is_deleted, create_time, update_time)
-        VALUES (#{userId}, #{diseaseName}, #{diagnosisDate}, #{status}, #{isDeleted}, #{createTime}, #{updateTime})
+        INSERT INTO user_medical_history (user_id, disease_name, diagnosis_date, status, hospital_name, doctor_name, is_deleted, create_time, update_time)
+        VALUES (#{userId}, #{diseaseName}, #{diagnosisDate}, #{status}, #{hospitalName}, #{doctorName}, #{isDeleted}, #{createTime}, #{updateTime})
     </insert>
 
     <!-- 更新病史记录 -->
@@ -140,6 +142,12 @@
             </if>
             <if test="status != null">
                 status = #{status},
+            </if>
+            <if test="hospitalName != null">
+                hospital_name = #{hospitalName},
+            </if>
+            <if test="doctorName != null">
+                doctor_name = #{doctorName},
             </if>
             update_time = #{updateTime}
         </set>

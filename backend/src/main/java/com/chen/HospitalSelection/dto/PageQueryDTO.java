@@ -34,4 +34,16 @@ public class PageQueryDTO implements Serializable {
     @Min(value = 1, message = "每页大小必须大于0")
     @Schema(description = "每页大小", example = "10", required = true)
     private Integer pageSize;
+
+    /**
+     * 是否包含已删除的数据
+     */
+    @Schema(description = "是否包含已删除的数据", example = "false")
+    private Boolean includeDeleted;
+
+    /**
+     * 搜索关键词
+     */
+    @Schema(description = "搜索关键词", example = "测试")
+    private String keyword;
 }

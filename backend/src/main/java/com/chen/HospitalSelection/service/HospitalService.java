@@ -1,5 +1,6 @@
 package com.chen.HospitalSelection.service;
 
+import com.chen.HospitalSelection.dto.AIQueryRequestDTO;
 import com.chen.HospitalSelection.dto.HospitalFilterDTO;
 import com.chen.HospitalSelection.dto.PageQueryDTO;
 import com.chen.HospitalSelection.vo.DepartmentVO;
@@ -93,4 +94,13 @@ public interface HospitalService {
      * @return 医院列表
      */
     PageResult<HospitalSimpleVO> getHospitalsByLevel(String level, PageQueryDTO dto);
+
+    /**
+     * AI智能推荐医院
+     * 使用AI解析用户自然语言查询，返回匹配的医院列表
+     *
+     * @param request AI查询请求（包含用户的自然语言查询和分页参数）
+     * @return 医院分页列表
+     */
+    PageResult<HospitalSimpleVO> aiRecommendHospitals(AIQueryRequestDTO request);
 }

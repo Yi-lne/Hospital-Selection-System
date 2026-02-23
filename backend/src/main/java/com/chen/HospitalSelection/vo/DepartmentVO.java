@@ -37,4 +37,9 @@ public class DepartmentVO {
      * 该科室下的医生数量
      */
     private Integer doctorCount;
+
+    /**
+     * 是否已删除（逻辑删除）
+     */
+    private Boolean isDeleted;
 }

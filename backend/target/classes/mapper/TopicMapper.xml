@@ -84,7 +84,7 @@
             <if test="diseaseCode != null">
                 disease_code = #{diseaseCode},
             </if>
-            <if test="boardLevel1 != null and boardLevel1 != ''">
+            <if test="boardLevel1 != null">
                 board_level1 = #{boardLevel1},
             </if>
             <if test="boardLevel2 != null">
@@ -93,10 +93,10 @@
             <if test="boardType != null">
                 board_type = #{boardType},
             </if>
-            <if test="title != null and title != ''">
+            <if test="title != null">
                 title = #{title},
             </if>
-            <if test="content != null and content != ''">
+            <if test="content != null">
                 content = #{content},
             </if>
             <if test="status != null">
@@ -208,7 +208,9 @@
         FROM community_topic
         WHERE is_deleted = 0
         AND (title LIKE CONCAT('%', #{keyword}, '%')
-             OR content LIKE CONCAT('%', #{keyword}, '%'))
+             OR board_level1 LIKE CONCAT('%', #{keyword}, '%')
+             OR board_level2 LIKE CONCAT('%', #{keyword}, '%')
+             OR disease_code LIKE CONCAT('%', #{keyword}, '%'))
         ORDER BY create_time DESC
     </select>
 
@@ -217,7 +219,7 @@
         SELECT <include refid="Base_Column_List"/>
         FROM community_topic
         WHERE is_deleted = 0
-        ORDER BY (like_count * 3 + comment_count * 2 + view_count) DESC, create_time DESC
+        ORDER BY (like_count * 5 + collect_count * 4 + comment_count * 3 + view_count) DESC, create_time DESC
         <if test="limit != null">
             LIMIT #{limit}
         </if>
@@ -232,6 +234,46 @@
         <if test="limit != null">
             LIMIT #{limit}
         </if>
+    </select>
+
+    <!-- 根据板块查询热门话题 -->
+    <select id="selectHotTopicsByBoard" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_topic
+        WHERE is_deleted = 0
+        <if test="boardLevel1 != null and boardLevel1 != ''">
+            AND board_level1 = #{boardLevel1}
+        </if>
+        <if test="boardLevel2 != null and boardLevel2 != ''">
+            AND board_level2 = #{boardLevel2}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (title LIKE CONCAT('%', #{keyword}, '%')
+                 OR board_level1 LIKE CONCAT('%', #{keyword}, '%')
+                 OR board_level2 LIKE CONCAT('%', #{keyword}, '%')
+                 OR disease_code LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY (like_count * 5 + collect_count * 4 + comment_count * 3 + view_count) DESC, create_time DESC
+    </select>
+
+    <!-- 根据板块查询最新话题 -->
+    <select id="selectLatestTopicsByBoard" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM community_topic
+        WHERE is_deleted = 0
+        <if test="boardLevel1 != null and boardLevel1 != ''">
+            AND board_level1 = #{boardLevel1}
+        </if>
+        <if test="boardLevel2 != null and boardLevel2 != ''">
+            AND board_level2 = #{boardLevel2}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (title LIKE CONCAT('%', #{keyword}, '%')
+                 OR board_level1 LIKE CONCAT('%', #{keyword}, '%')
+                 OR board_level2 LIKE CONCAT('%', #{keyword}, '%')
+                 OR disease_code LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY create_time DESC
     </select>
 
     <!-- 更新话题状态 -->

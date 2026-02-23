@@ -11,21 +11,21 @@ export function getNotifications(params) {
  * 标记通知已读
  */
 export function markNotificationRead(id) {
-  return Request.put(`/notification/${id}/read`)
+  return Request.put(`/notification/read/${id}`)
 }
 
 /**
  * 全部标记已读
  */
 export function markAllNotificationsRead() {
-  return Request.put('/notification/read-all')
+  return Request.put('/notification/read/all')
 }
 
 /**
  * 获取未读通知数量
  */
 export function getUnreadCount() {
-  return Request.get('/notification/unread-count')
+  return Request.get('/notification/unread/count')
 }
 
 /**
@@ -33,4 +33,11 @@ export function getUnreadCount() {
  */
 export function deleteNotification(id) {
   return Request.delete(`/notification/${id}`)
+}
+
+/**
+ * 删除所有已读通知
+ */
+export function deleteAllReadNotifications() {
+  return Request.delete('/notification/read/all')
 }

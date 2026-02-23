@@ -44,7 +44,6 @@
             prefix-icon="Lock"
             size="large"
             show-password
-            @keyup.enter="handleRegister"
           />
         </el-form-item>
 
@@ -56,6 +55,17 @@
             size="large"
             clearable
             maxlength="20"
+          />
+        </el-form-item>
+
+        <!-- 滑块验证码 -->
+        <el-form-item prop="captcha">
+          <SliderCaptcha
+            ref="captchaRef"
+            @captcha-verified="handleCaptchaVerified"
+            @captcha-failed="handleCaptchaFailed"
+            @before-verify="handleBeforeVerify"
+            @captcha-refreshed="checkFormAndEnableSlider"
           />
         </el-form-item>
 
@@ -73,35 +83,56 @@
 
         <div class="form-footer">
           <span>已有账号?</span>
-          <el-link type="primary" @click="$router.push('/login')">立即登录</el-link>
+          <el-link type="primary" @click="$router.push('/auth/login')">立即登录</el-link>
         </div>
       </el-form>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, reactive } from 'vue'
+<script setup>
+import { ref, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
 import { OfficeBuilding } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores'
+import SliderCaptcha from '@/components/SliderCaptcha.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
-const formRef = ref<FormInstance>()
+const formRef = ref()
+const captchaRef = ref()
 const loading = ref(false)
 
 const formData = reactive({
   phone: '',
   password: '',
   confirmPassword: '',
-  nickname: ''
+  nickname: '',
+  captchaId: '',
+  moveX: null
 })
 
+// 监听表单字段变化，实时更新滑块是否可拖动
+watch(() => [
+  formData.phone,
+  formData.password,
+  formData.confirmPassword
+], () => {
+  const isPhoneValid = formData.phone && /^1[3-9]\d{9}$/.test(formData.phone)
+  const isPasswordValid = formData.password && formData.password.length >= 6
+  const isConfirmPasswordValid = formData.confirmPassword && formData.confirmPassword === formData.password
+
+  // 只有当所有必填项都有效时，才允许拖动滑块
+  const canDrag = isPhoneValid && isPasswordValid && isConfirmPasswordValid
+  captchaRef.value?.setCanDrag(canDrag)
+}, { deep: true })
+
+// 验证码是否验证通过
+const captchaVerified = ref(false)
+
 // 手机号验证规则
-const validatePhone = (rule: any, value: any, callback: any) => {
+const validatePhone = (rule, value, callback) => {
   if (!value) {
     callback(new Error('请输入手机号'))
   } else if (!/^1[3-9]\d{9}$/.test(value)) {
@@ -111,7 +142,7 @@ const validatePhone = (rule: any, value: any, callback: any) => {
   }
 }
 
-const validateConfirmPassword = (rule: any, value: any, callback: any) => {
+const validateConfirmPassword = (rule, value, callback) => {
   if (value === '') {
     callback(new Error('请再次输入密码'))
   } else if (value !== formData.password) {
@@ -121,20 +152,114 @@ const validateConfirmPassword = (rule: any, value: any, callback: any) => {
   }
 }
 
-const rules: FormRules = {
+// 验证码验证规则
+const validateCaptcha = (rule, value, callback) => {
+  if (!captchaVerified.value) {
+    callback(new Error('请完成滑块验证'))
+  } else {
+    callback()
+  }
+}
+
+const rules = {
   phone: [
-    { required: true, validator: validatePhone, trigger: 'blur' }
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { validator: validatePhone, trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, max: 20, message: '密码长度为6-20个字符', trigger: 'blur' }
   ],
   confirmPassword: [
-    { required: true, validator: validateConfirmPassword, trigger: 'blur' }
+    { required: true, message: '请再次输入密码', trigger: 'blur' },
+    { validator: validateConfirmPassword, trigger: 'blur' }
   ],
   nickname: [
     { max: 20, message: '昵称最多20个字符', trigger: 'blur' }
+  ],
+  captcha: [
+    { required: true, validator: validateCaptcha, trigger: 'change' }
   ]
+}
+
+// 处理验证码验证成功
+const handleCaptchaVerified = (captchaData) => {
+  formData.captchaId = captchaData.captchaId
+  formData.moveX = captchaData.moveX
+  captchaVerified.value = true
+  // 触发表单验证
+  formRef.value?.validateField('captcha')
+}
+
+// 处理验证码验证失败
+const handleCaptchaFailed = () => {
+  captchaVerified.value = false
+  formData.captchaId = ''
+  formData.moveX = null
+  // 清除表单验证错误提示
+  formRef.value?.clearValidate()
+}
+
+// 处理验证前检查
+const handleBeforeVerify = () => {
+  // 验证必填字段是否已填写
+  if (!formData.phone) {
+    ElMessage.warning('请先输入手机号')
+    captchaRef.value?.setCanDrag(false)
+    return
+  }
+  if (!formData.password) {
+    ElMessage.warning('请先输入密码')
+    captchaRef.value?.setCanDrag(false)
+    return
+  }
+  if (!formData.confirmPassword) {
+    ElMessage.warning('请先确认密码')
+    captchaRef.value?.setCanDrag(false)
+    return
+  }
+
+  // 验证手机号格式
+  if (!/^1[3-9]\d{9}$/.test(formData.phone)) {
+    ElMessage.warning('请输入正确的手机号')
+    captchaRef.value?.setCanDrag(false)
+    return
+  }
+
+  // 验证密码长度
+  if (formData.password.length < 6) {
+    ElMessage.warning('密码长度为6-20个字符')
+    captchaRef.value?.setCanDrag(false)
+    return
+  }
+
+  // 验证两次密码是否一致
+  if (formData.password !== formData.confirmPassword) {
+    ElMessage.warning('两次输入密码不一致')
+    captchaRef.value?.setCanDrag(false)
+    return
+  }
+
+  // 验证通过，允许拖动
+  captchaRef.value?.setCanDrag(true)
+}
+
+// 检查表单并启用滑块（验证码刷新后调用）
+const checkFormAndEnableSlider = () => {
+  const isPhoneValid = formData.phone && /^1[3-9]\d{9}$/.test(formData.phone)
+  const isPasswordValid = formData.password && formData.password.length >= 6
+  const isConfirmPasswordValid = formData.confirmPassword && formData.confirmPassword === formData.password
+
+  // 只有当所有必填项都有效时，才允许拖动滑块
+  captchaRef.value?.setCanDrag(isPhoneValid && isPasswordValid && isConfirmPasswordValid)
+}
+
+// 刷新验证码
+const refreshCaptcha = () => {
+  captchaVerified.value = false
+  formData.captchaId = ''
+  formData.moveX = null
+  captchaRef.value?.refreshCaptcha()
 }
 
 const handleRegister = async () => {
@@ -146,9 +271,11 @@ const handleRegister = async () => {
         loading.value = true
 
         // 构建注册数据
-        const registerData: any = {
+        const registerData = {
           phone: formData.phone,
-          password: formData.password
+          password: formData.password,
+          captchaId: formData.captchaId,
+          moveX: formData.moveX
         }
 
         // 昵称可选
@@ -157,8 +284,14 @@ const handleRegister = async () => {
         }
 
         await userStore.register(registerData)
-        ElMessage.success('注册成功，请登录')
-        router.push('/login')
+        ElMessage.success('注册成功！正在为您自动登录...')
+        // 注册成功后已经自动登录，跳转到首页
+        setTimeout(() => {
+          router.push('/home')
+        }, 1000)
+      } catch (error) {
+        // 注册失败，刷新验证码
+        refreshCaptcha()
       } finally {
         loading.value = false
       }

@@ -50,12 +50,13 @@ public interface DoctorService {
     List<DoctorSimpleVO> getDoctorsByDepartment(Long deptId);
 
     /**
-     * 根据医院ID查询医生列表
+     * 根据医院ID查询医生列表（分页）
      *
      * @param hospitalId 医院ID
-     * @return 医生列表
+     * @param dto 分页查询参数
+     * @return 医生分页列表
      */
-    List<DoctorSimpleVO> getDoctorsByHospital(Long hospitalId);
+    PageResult<DoctorSimpleVO> getDoctorsByHospital(Long hospitalId, PageQueryDTO dto);
 
     /**
      * 根据医院ID和科室ID查询医生列表
@@ -65,6 +66,15 @@ public interface DoctorService {
      * @return 医生列表
      */
     List<DoctorSimpleVO> getDoctorsByHospitalAndDept(Long hospitalId, Long deptId);
+
+    /**
+     * 根据医院ID和科室名称查询医生列表
+     *
+     * @param hospitalId 医院ID
+     * @param deptName   科室名称
+     * @return 医生列表
+     */
+    List<DoctorSimpleVO> getDoctorsByHospitalAndDeptName(Long hospitalId, String deptName);
 
     /**
      * 搜索医生（关键词搜索）

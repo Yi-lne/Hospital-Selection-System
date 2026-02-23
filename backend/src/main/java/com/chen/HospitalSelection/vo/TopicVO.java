@@ -41,6 +41,11 @@ public class TopicVO {
     private String diseaseCode;
 
     /**
+     * 关联疾病名称
+     */
+    private String diseaseName;
+
+    /**
      * 一级板块（心血管区、内分泌区、肿瘤区、儿科区等）
      */
     private String boardLevel1;

@@ -94,6 +94,15 @@ public interface LikeMapper {
     int cancelLike(@Param("userId") Long userId, @Param("targetType") Integer targetType, @Param("targetId") Long targetId);
 
     /**
+     * 重新点赞（恢复逻辑删除的记录）
+     * @param userId 用户ID
+     * @param targetType 点赞类型
+     * @param targetId 目标ID
+     * @return 影响行数
+     */
+    int relike(@Param("userId") Long userId, @Param("targetType") Integer targetType, @Param("targetId") Long targetId);
+
+    /**
      * 根据ID删除点赞记录
      * @param id 主键ID
      * @return 影响行数

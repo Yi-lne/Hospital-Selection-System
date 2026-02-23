@@ -1,0 +1,23 @@
+    @Override
+    public List<AreaVO> getAreaTree() {
+        log.info("获取省市区树");
+
+        // 查询所有省份
+        List<Area> provinceList = areaMapper.selectProvinces();
+
+        // 构建树形结构
+        List<AreaVO> tree = new ArrayList<>();
+        for (Area province : provinceList) {
+            AreaVO provinceVO = convertToVO(province);
+
+            // 查询该省份下的所有城市
+            List<Area> cityList = areaMapper.selectCitiesByProvince(province.getCode());
+            List<AreaVO> cityVOList = convertToVOList(cityList);
+
+            // 设置为子节点
+            provinceVO.setChildren(cityVOList);
+            tree.add(provinceVO);
+        }
+
+        return tree;
+    }

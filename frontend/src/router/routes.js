@@ -26,26 +26,15 @@ export const routes = [
         path: '/hospital/:id',
         name: 'HospitalDetail',
         component: () => import('@/views/hospital/HospitalDetail.vue'),
-        meta: { title: '医院详情' }
+        meta: { title: '医院详情', requiresAuth: true }
       },
-      // 医生相关
-      {
-        path: '/doctor',
-        name: 'DoctorList',
-        component: () => import('@/views/doctor/DoctorList.vue'),
-        meta: { title: '医生列表' }
-      },
-      {
-        path: '/doctor/department/:deptId',
-        name: 'DoctorByDepartment',
-        component: () => import('@/views/doctor/DoctorByDepartment.vue'),
-        meta: { title: '科室医生' }
-      },
+      // 医生功能已整合到医院详情页，不再有独立的医生页面
+      // 医生详情
       {
         path: '/doctor/:id',
         name: 'DoctorDetail',
         component: () => import('@/views/doctor/DoctorDetail.vue'),
-        meta: { title: '医生详情' }
+        meta: { title: '医生详情', requiresAuth: true }
       },
       // 社区相关
       {
@@ -59,6 +48,13 @@ export const routes = [
         name: 'TopicList',
         component: () => import('@/views/community/TopicList.vue'),
         meta: { title: '话题列表' }
+      },
+      // 搜索结果
+      {
+        path: '/search',
+        name: 'SearchResult',
+        component: () => import('@/views/search/SearchResult.vue'),
+        meta: { title: '搜索结果' }
       },
       {
         path: '/community/topic/:id',
@@ -122,12 +118,6 @@ export const routes = [
         meta: { title: '编辑病史', requiresAuth: true }
       },
       {
-        path: '/user/query-history',
-        name: 'QueryHistory',
-        component: () => import('@/views/user/QueryHistory.vue'),
-        meta: { title: '查询历史', requiresAuth: true }
-      },
-      {
         path: '/user/comments',
         name: 'MyComments',
         component: () => import('@/views/user/MyComments.vue'),
@@ -157,6 +147,61 @@ export const routes = [
         name: 'Chat',
         component: () => import('@/views/message/Chat.vue'),
         meta: { title: '聊天', requiresAuth: true }
+      },
+      // 管理员相关
+      {
+        path: '/admin/hospital',
+        name: 'AdminHospital',
+        component: () => import('@/views/admin/HospitalList.vue'),
+        meta: { title: '医院管理', requiresAuth: true, requiresAdmin: true }
+      },
+      {
+        path: '/admin/hospital/edit/:id?',
+        name: 'HospitalEdit',
+        component: () => import('@/views/admin/HospitalEdit.vue'),
+        meta: { title: '编辑医院', requiresAuth: true, requiresAdmin: true }
+      },
+      {
+        path: '/admin/department',
+        name: 'AdminDepartment',
+        component: () => import('@/views/admin/DepartmentManage.vue'),
+        meta: { title: '科室管理', requiresAuth: true, requiresAdmin: true }
+      },
+      {
+        path: '/admin/department/:hospitalId',
+        name: 'AdminDepartmentManage',
+        component: () => import('@/views/admin/DepartmentManage.vue'),
+        meta: { title: '科室管理', requiresAuth: true, requiresAdmin: true }
+      },
+      {
+        path: '/admin/doctor',
+        name: 'AdminDoctor',
+        component: () => import('@/views/admin/DoctorManage.vue'),
+        meta: { title: '医生管理', requiresAuth: true, requiresAdmin: true }
+      },
+      {
+        path: '/admin/doctor/:hospitalId',
+        name: 'AdminDoctorManage',
+        component: () => import('@/views/admin/DoctorManage.vue'),
+        meta: { title: '医生管理', requiresAuth: true, requiresAdmin: true }
+      },
+      {
+        path: '/admin/community',
+        name: 'AdminCommunity',
+        component: () => import('@/views/admin/CommunityManage.vue'),
+        meta: { title: '社区管理', requiresAuth: true, requiresAdmin: true }
+      },
+      {
+        path: '/admin/report',
+        name: 'AdminReport',
+        component: () => import('@/views/admin/ReportManage.vue'),
+        meta: { title: '举报管理', requiresAuth: true, requiresAdmin: true }
+      },
+      {
+        path: '/admin/user',
+        name: 'AdminUser',
+        component: () => import('@/views/admin/UserList.vue'),
+        meta: { title: '用户管理', requiresAuth: true, requiresAdmin: true }
       }
     ]
   },
@@ -166,13 +211,13 @@ export const routes = [
     component: () => import('@/layouts/EmptyLayout.vue'),
     children: [
       {
-        path: '/login',
+        path: 'login',
         name: 'Login',
         component: () => import('@/views/auth/Login.vue'),
         meta: { title: '登录' }
       },
       {
-        path: '/register',
+        path: 'register',
         name: 'Register',
         component: () => import('@/views/auth/Register.vue'),
         meta: { title: '注册' }

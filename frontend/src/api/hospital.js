@@ -29,6 +29,13 @@ export function getHospitalDepartments(hospitalId) {
 }
 
 /**
+ * 获取医院科室列表（从科室接口）
+ */
+export function getDepartmentsByHospital(hospitalId) {
+  return Request.get(`/department/hospital/${hospitalId}`)
+}
+
+/**
  * 筛选医院（多条件）
  */
 export function filterHospitals(params) {
@@ -40,4 +47,11 @@ export function filterHospitals(params) {
  */
 export function getHospitalDoctors(hospitalId) {
   return Request.get(`/hospital/${hospitalId}/doctors`)
+}
+
+/**
+ * AI智能推荐医院
+ */
+export function aiRecommendHospitals(data) {
+  return Request.post('/hospital/ai-recommend', data)
 }

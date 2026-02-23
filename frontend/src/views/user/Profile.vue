@@ -77,6 +77,7 @@
                     type="password"
                     placeholder="请输入原密码"
                     show-password
+                    autocomplete="current-password"
                   />
                 </el-form-item>
 
@@ -86,6 +87,7 @@
                     type="password"
                     placeholder="请输入新密码"
                     show-password
+                    autocomplete="new-password"
                   />
                 </el-form-item>
 
@@ -95,6 +97,7 @@
                     type="password"
                     placeholder="请再次输入新密码"
                     show-password
+                    autocomplete="new-password"
                   />
                 </el-form-item>
 
@@ -113,15 +116,15 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import type { FormInstance, FormRules, UploadProps } from 'element-plus'
+<script setup>
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores'
 
 const userStore = useUserStore()
-const formRef = ref<FormInstance>()
-const passwordFormRef = ref<FormInstance>()
+const formRef = ref()
+const passwordFormRef = ref()
 const activeTab = ref('basic')
 const loading = ref(false)
 const passwordLoading = ref(false)
@@ -130,7 +133,7 @@ const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726
 const formData = reactive({
   phone: '',
   nickname: '',
-  gender: 0
+  gender: ''
 })
 
 const passwordData = reactive({
@@ -144,7 +147,7 @@ const uploadHeaders = computed(() => ({
   Authorization: `Bearer ${userStore.token}`
 }))
 
-const validateConfirmPassword = (rule: any, value: any, callback: any) => {
+const validateConfirmPassword = (rule, value, callback) => {
   if (value === '') {
     callback(new Error('请再次输入新密码'))
   } else if (value !== passwordData.newPassword) {
@@ -154,22 +157,23 @@ const validateConfirmPassword = (rule: any, value: any, callback: any) => {
   }
 }
 
-const rules: FormRules = {
+const rules = {
   nickname: [
-    { max: 20, message: '昵称最多20个字符', trigger: 'blur' }
+    { _max: 20, message: '昵称最多20个字符', trigger: 'blur' }
   ]
 }
 
-const passwordRules: FormRules = {
+const passwordRules = {
   oldPassword: [
     { required: true, message: '请输入原密码', trigger: 'blur' }
   ],
   newPassword: [
     { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, max: 20, message: '密码长度为6-20个字符', trigger: 'blur' }
+    { min: 6, _max: 20, message: '密码长度为6-20个字符', trigger: 'blur' }
   ],
   confirmPassword: [
-    { required: true, validator: validateConfirmPassword, trigger: 'blur' }
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    { validator: validateConfirmPassword, trigger: 'blur' }
   ]
 }
 
@@ -198,7 +202,7 @@ const handleSave = async () => {
         })
         ElMessage.success('保存成功')
       } catch (error) {
-        console.error('Failed to update user info:', error)
+        console.error('更新用户信息失败:', error)
       } finally {
         loading.value = false
       }
@@ -225,10 +229,14 @@ const handleChangePassword = async () => {
         })
         ElMessage.success('密码修改成功，请重新登录')
         passwordFormRef.value?.resetFields()
-        userStore.logout()
-        window.location.href = '/login'
+
+        // 延迟一下，让用户看到成功提示
+        setTimeout(() => {
+          userStore.logout()
+          window.location.href = '/auth/login'
+        }, 1500)
       } catch (error) {
-        console.error('Failed to change password:', error)
+        console.error('修改密码失败:', error)
       } finally {
         passwordLoading.value = false
       }
@@ -237,7 +245,7 @@ const handleChangePassword = async () => {
 }
 
 // 上传前校验
-const beforeUpload: UploadProps['beforeUpload'] = (file) => {
+const beforeUpload = (file) => {
   const isImage = file.type.startsWith('image/')
   const isLt2M = file.size / 1024 / 1024 < 2
 
@@ -253,7 +261,7 @@ const beforeUpload: UploadProps['beforeUpload'] = (file) => {
 }
 
 // 上传成功
-const handleUploadSuccess: UploadProps['onSuccess'] = (response) => {
+const handleUploadSuccess = (response) => {
   if (response.code === 200) {
     ElMessage.success('头像上传成功')
     userStore.fetchUserInfo()
@@ -264,6 +272,17 @@ const handleUploadSuccess: UploadProps['onSuccess'] = (response) => {
 
 onMounted(() => {
   initFormData()
+})
+
+// 监听Tab切换，确保密码输入框始终为空
+watch(activeTab, (newTab) => {
+  if (newTab === 'password') {
+    // 切换到修改密码Tab时，清空密码数据
+    passwordData.oldPassword = ''
+    passwordData.newPassword = ''
+    passwordData.confirmPassword = ''
+    passwordFormRef.value?.clearValidate()
+  }
 })
 </script>
 

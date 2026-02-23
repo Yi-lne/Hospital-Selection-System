@@ -1,5 +1,6 @@
 package com.chen.HospitalSelection.mapper;
 
+import com.chen.HospitalSelection.dto.PageQueryDTO;
 import com.chen.HospitalSelection.model.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -97,4 +98,33 @@ public interface UserMapper {
      * @return 存在数量
      */
     int countByPhone(@Param("phone") String phone);
+
+    /**
+     * 根据昵称查询用户（排除指定用户ID）
+     * @param nickname 昵称
+     * @param excludeUserId 排除的用户ID
+     * @return 用户对象
+     */
+    User selectByNicknameExcludeId(@Param("nickname") String nickname, @Param("excludeUserId") Long excludeUserId);
+
+    /**
+     * 搜索用户（根据手机号或昵称）
+     * @param keyword 搜索关键词
+     * @return 用户列表
+     */
+    List<User> searchUsers(@Param("keyword") String keyword);
+
+    /**
+     * 分页查询用户
+     * @param dto 分页查询参数
+     * @return 用户列表
+     */
+    List<User> selectByPage(PageQueryDTO dto);
+
+    /**
+     * 统计用户数量
+     * @param dto 查询条件
+     * @return 用户数量
+     */
+    long countByCondition(PageQueryDTO dto);
 }

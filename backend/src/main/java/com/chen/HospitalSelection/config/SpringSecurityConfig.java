@@ -162,6 +162,9 @@ public class SpringSecurityConfig {
                         "/user/password/reset"
                 ).permitAll()
 
+                // 验证码接口（登录注册前需要访问）
+                .antMatchers("/captcha/**").permitAll()
+
                 // 医院公开查询接口
                 .antMatchers(
                         "/hospital/**",
@@ -184,13 +187,16 @@ public class SpringSecurityConfig {
                 // 静态资源
                 .antMatchers(
                         "/static/**",
+                        "/uploads/**",
                         "/images/**",
                         "/css/**",
                         "/js/**"
                 ).permitAll()
 
-                // ========== 需要登录的接口 ==========
-                // 除上述公开接口外，所有接口都需要认证
+                // 病史管理接口
+                .antMatchers("/medical-history/**").permitAll()
+
+                // ========== 除上述公开接口外，所有接口都需要认证 ==========
                 .anyRequest().authenticated()
                 .and()
 

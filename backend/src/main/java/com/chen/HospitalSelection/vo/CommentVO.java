@@ -42,6 +42,11 @@ public class CommentVO {
     private String avatar;
 
     /**
+     * 评论用户性别（0=保密，1=男，2=女）
+     */
+    private Integer gender;
+
+    /**
      * 父评论ID（0 = 一级评论，>0 = 回复）
      */
     private Long parentId;

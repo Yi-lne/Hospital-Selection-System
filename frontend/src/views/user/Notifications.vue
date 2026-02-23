@@ -12,12 +12,19 @@
         <el-radio-group v-model="activeTab" @change="loadNotifications">
           <el-radio-button value="">全部</el-radio-button>
           <el-radio-button value="like">点赞</el-radio-button>
+          <el-radio-button value="collect">收藏</el-radio-button>
           <el-radio-button value="comment">评论</el-radio-button>
           <el-radio-button value="reply">回复</el-radio-button>
+          <el-radio-button value="report_handle">举报</el-radio-button>
         </el-radio-group>
-        <el-button v-if="hasUnread" type="primary" @click="markAllRead">
-          全部已读
-        </el-button>
+        <div class="filter-actions">
+          <el-button v-if="hasRead" @click="deleteAllRead">
+            删除所有已读
+          </el-button>
+          <el-button v-if="hasUnread" type="primary" @click="markAllRead">
+            全部已读
+          </el-button>
+        </div>
       </div>
 
       <!-- 通知列表 -->
@@ -27,22 +34,28 @@
           :key="notification.id"
           class="notification-item"
           :class="{ unread: !notification.isRead }"
-          @click="handleNotificationClick(notification)"
         >
           <div class="notification-icon">
             <el-icon :size="24" :color="getNotificationColor(notification.type)">
               <component :is="getNotificationIcon(notification.type)" />
             </el-icon>
           </div>
-          <div class="notification-content">
-            <div class="notification-header">
-              <span class="type">{{ getNotificationLabel(notification.type) }}</span>
+          <div class="notification-content" @click="handleNotificationClick(notification)">
+            <div class="notification-text">
+              <span class="content">{{ notification.content }}</span>
+              <span v-if="notification.topicTitle" class="topic-title">《{{ notification.topicTitle }}》</span>
               <span class="time">{{ formatTime(notification.createTime) }}</span>
             </div>
-            <p class="notification-text">{{ notification.content }}</p>
-            <div v-if="notification.topicTitle" class="topic-ref">
-              话题：{{ notification.topicTitle }}
-            </div>
+          </div>
+          <div class="notification-actions">
+            <el-button
+              text
+              size="small"
+              type="danger"
+              @click.stop="handleDeleteNotification(notification)"
+            >
+              删除
+            </el-button>
           </div>
           <div v-if="!notification.isRead" class="unread-dot"></div>
         </div>
@@ -69,12 +82,16 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Star, ChatDotRound, ChatLineSquare } from '@element-plus/icons-vue'
-import { getNotifications, markNotificationRead, markAllNotificationsRead } from '@/api/notification'
+import { Check, Star, ChatDotRound, ChatLineSquare, Warning } from '@element-plus/icons-vue'
+import { getNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification, deleteAllReadNotifications } from '@/api/notification'
 import { formatRelativeTime } from '@/utils/date'
+import { useNotificationStore } from '@/stores'
 import Empty from '@/components/common/Empty.vue'
+import { ElMessageBox } from 'element-plus'
+import { getTopicDetail } from '@/api/community'
 
 const router = useRouter()
+const notificationStore = useNotificationStore()
 
 const loading = ref(false)
 const notificationList = ref([])
@@ -90,6 +107,10 @@ const hasUnread = computed(() => {
   return notificationList.value.some(n => !n.isRead)
 })
 
+const hasRead = computed(() => {
+  return notificationList.value.some(n => n.isRead)
+})
+
 // 格式化时间
 const formatTime = (time) => {
   return formatRelativeTime(time)
@@ -98,50 +119,47 @@ const formatTime = (time) => {
 // 获取通知图标
 const getNotificationIcon = (type) => {
   const icons = {
-    like: Star,
+    like: Check,
+    collect: Star,
     comment: ChatDotRound,
-    reply: ChatLineSquare
+    reply: ChatLineSquare,
+    report_handle: Warning
   }
-  return icons[type] || Star
+  return icons[type] || Check
 }
 
 // 获取通知颜色
 const getNotificationColor = (type) => {
   const colors = {
-    like: '#f56c6c',
+    like: '#67c23a',
+    collect: '#E6A23C',
     comment: '#409eff',
-    reply: '#67c23a'
+    reply: '#909399',
+    report_handle: '#F56C6C'
   }
   return colors[type] || '#909399'
-}
-
-// 获取通知标签
-const getNotificationLabel = (type) => {
-  const labels = {
-    like: '点赞了你的内容',
-    comment: '评论了你的话题',
-    reply: '回复了你的评论'
-  }
-  return labels[type] || '通知'
 }
 
 // 加载通知列表
 const loadNotifications = async () => {
   try {
     loading.value = true
-    const params = {
-      page: pagination.page,
-      pageSize: pagination.pageSize
-    }
+    const res = await getNotifications()
+    const allNotifications = res.data || []
+
+    // 前端过滤：根据类型筛选
+    let filteredNotifications = allNotifications
     if (activeTab.value) {
-      params.type = activeTab.value
+      filteredNotifications = allNotifications.filter(n => n.type === activeTab.value)
     }
-    const res = await getNotifications(params)
-    notificationList.value = res.data.list || []
-    total.value = res.data.total || 0
+
+    // 前端分页
+    total.value = filteredNotifications.length
+    const start = (pagination.page - 1) * pagination.pageSize
+    const end = start + pagination.pageSize
+    notificationList.value = filteredNotifications.slice(start, end)
   } catch (error) {
-    console.error('Failed to load notifications:', error)
-    // Mock data for development
+    console.error('加载通知失败:', error)
     notificationList.value = []
     total.value = 0
   } finally {
@@ -151,18 +169,43 @@ const loadNotifications = async () => {
 
 // 点击通知
 const handleNotificationClick = async (notification) => {
-  if (!notification.isRead) {
+  // 检查话题是否存在
+  if (notification.relatedId) {
     try {
-      await markNotificationRead(notification.id)
-      notification.isRead = true
-    } catch (error) {
-      console.error('Failed to mark as read:', error)
-    }
-  }
+      await getTopicDetail(notification.relatedId)
 
-  // 跳转到相关内容
-  if (notification.topicId) {
-    router.push(`/community/topic/${notification.topicId}`)
+      // 话题存在，标记为已读并跳转
+      if (!notification.isRead) {
+        try {
+          await markNotificationRead(notification.id)
+          notification.isRead = true
+          // 更新全局未读通知数量
+          notificationStore.fetchUnreadCount()
+        } catch (error) {
+          console.error('标记已读失败:', error)
+        }
+      }
+
+      router.push(`/community/topic/${notification.relatedId}`)
+    } catch (error) {
+      // 话题不存在，提示并删除通知
+      console.error('话题不存在:', error)
+      ElMessage.warning('该话题已被删除')
+
+      try {
+        await deleteNotification(notification.id)
+        // 从列表中移除
+        const index = notificationList.value.findIndex(n => n.id === notification.id)
+        if (index > -1) {
+          notificationList.value.splice(index, 1)
+          total.value--
+        }
+        // 更新全局未读通知数量
+        notificationStore.fetchUnreadCount()
+      } catch (deleteError) {
+        console.error('删除通知失败:', deleteError)
+      }
+    }
   }
 }
 
@@ -172,8 +215,75 @@ const markAllRead = async () => {
     await markAllNotificationsRead()
     ElMessage.success('已全部标记为已读')
     loadNotifications()
+    // 更新全局未读通知数量
+    notificationStore.fetchUnreadCount()
   } catch (error) {
-    console.error('Failed to mark all as read:', error)
+    console.error('全部标记已读失败:', error)
+  }
+}
+
+// 删除通知
+const handleDeleteNotification = async (notification) => {
+  try {
+    await ElMessageBox.confirm(
+      '确定删除这条通知吗？删除后无法恢复。',
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    await deleteNotification(notification.id)
+    ElMessage.success('删除成功')
+    // 从列表中移除
+    const index = notificationList.value.findIndex(n => n.id === notification.id)
+    if (index > -1) {
+      notificationList.value.splice(index, 1)
+      total.value--
+    }
+    // 更新全局未读通知数量
+    notificationStore.fetchUnreadCount()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除通知失败:', error)
+      const errorMsg = error.response?.data?.message || error.message || '删除失败'
+      ElMessage.error(errorMsg)
+    }
+  }
+}
+
+// 删除所有已读通知
+const deleteAllRead = async () => {
+  try {
+    const readCount = notificationList.value.filter(n => n.isRead).length
+    if (readCount === 0) {
+      ElMessage.info('没有已读通知可删除')
+      return
+    }
+
+    await ElMessageBox.confirm(
+      `确定删除所有已读通知吗？将删除 ${readCount} 条通知。`,
+      '批量删除',
+      {
+        confirmButtonText: '确定删除',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    const res = await deleteAllReadNotifications()
+    ElMessage.success(res.data || '删除成功')
+    loadNotifications()
+    // 更新全局未读通知数量
+    notificationStore.fetchUnreadCount()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除所有已读失败:', error)
+      const errorMsg = error.response?.data?.message || error.message || '删除失败'
+      ElMessage.error(errorMsg)
+    }
   }
 }
 
@@ -212,8 +322,8 @@ onMounted(() => {
     .notification-item {
       position: relative;
       display: flex;
-      gap: 16px;
-      padding: 16px;
+      gap: 12px;
+      padding: 12px 16px;
       background: #f5f7fa;
       border-radius: 8px;
       margin-bottom: 12px;
@@ -230,8 +340,8 @@ onMounted(() => {
 
         .unread-dot {
           position: absolute;
-          top: 16px;
-          right: 16px;
+          top: 12px;
+          right: 12px;
           width: 8px;
           height: 8px;
           background: #f56c6c;
@@ -241,39 +351,39 @@ onMounted(() => {
 
       .notification-icon {
         flex-shrink: 0;
+        padding-top: 2px;
       }
 
       .notification-content {
         flex: 1;
+        min-width: 0;
 
-        .notification-header {
+        .notification-text {
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          margin-bottom: 8px;
+          gap: 8px;
+          flex-wrap: wrap;
+          margin: 0;
+          font-size: 14px;
+          line-height: 1.5;
+          color: #606266;
 
-          .type {
-            font-size: 14px;
+          .content {
             font-weight: 500;
             color: #303133;
           }
 
+          .topic-title {
+            color: #409eff;
+            font-size: 14px;
+          }
+
           .time {
+            margin-left: auto;
             font-size: 12px;
             color: #909399;
+            flex-shrink: 0;
           }
-        }
-
-        .notification-text {
-          margin: 0 0 8px;
-          font-size: 14px;
-          line-height: 1.6;
-          color: #606266;
-        }
-
-        .topic-ref {
-          font-size: 13px;
-          color: #409eff;
         }
       }
     }

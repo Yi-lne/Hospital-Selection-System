@@ -34,6 +34,17 @@ public interface DoctorMapper {
     List<Doctor> selectByHospitalId(@Param("hospitalId") Long hospitalId);
 
     /**
+     * 根据医院ID查询医生列表（可选择是否包含已删除）
+     * @param hospitalId 医院ID
+     * @param includeDeleted 是否包含已删除的医生
+     * @return 医生列表
+     */
+    List<Doctor> selectByHospitalIdIncludingDeleted(
+            @Param("hospitalId") Long hospitalId,
+            @Param("includeDeleted") Boolean includeDeleted
+    );
+
+    /**
      * 根据科室ID查询医生列表
      * @param deptId 科室ID
      * @return 医生列表
@@ -49,6 +60,14 @@ public interface DoctorMapper {
     List<Doctor> selectByHospitalAndDept(@Param("hospitalId") Long hospitalId, @Param("deptId") Long deptId);
 
     /**
+     * 根据医院ID和科室名称查询医生
+     * @param hospitalId 医院ID
+     * @param deptName 科室名称
+     * @return 医生列表
+     */
+    List<Doctor> selectByHospitalAndDeptName(@Param("hospitalId") Long hospitalId, @Param("deptName") String deptName);
+
+    /**
      * 根据职称查询医生
      * @param title 职称
      * @return 医生列表
@@ -56,11 +75,12 @@ public interface DoctorMapper {
     List<Doctor> selectByTitle(@Param("title") String title);
 
     /**
-     * 模糊搜索医生（按姓名、专业特长）
+     * 模糊搜索医生（按姓名、专业特长，可选择是否包含已删除）
      * @param keyword 关键词
+     * @param includeDeleted 是否包含已删除的医生（默认false）
      * @return 医生列表
      */
-    List<Doctor> searchByKeyword(@Param("keyword") String keyword);
+    List<Doctor> searchByKeyword(@Param("keyword") String keyword, @Param("includeDeleted") Boolean includeDeleted);
 
     /**
      * 根据动态条件查询医生
@@ -97,6 +117,13 @@ public interface DoctorMapper {
      * @return 医生列表
      */
     List<Doctor> selectAll();
+
+    /**
+     * 查询所有医生（可选择是否包含已删除）
+     * @param includeDeleted 是否包含已删除的医生
+     * @return 医生列表
+     */
+    List<Doctor> selectAllIncludingDeleted(@Param("includeDeleted") Boolean includeDeleted);
 
     /**
      * 插入医生
@@ -174,4 +201,18 @@ public interface DoctorMapper {
      * @return 医生数量
      */
     int countByDeptId(@Param("deptId") Long deptId);
+
+    /**
+     * 根据科室ID删除所有医生
+     * @param deptId 科室ID
+     * @return 影响行数
+     */
+    int deleteByDeptId(@Param("deptId") Long deptId);
+
+    /**
+     * 根据医院ID恢复所有医生
+     * @param hospitalId 医院ID
+     * @return 影响行数
+     */
+    int restoreByHospitalId(@Param("hospitalId") Long hospitalId);
 }

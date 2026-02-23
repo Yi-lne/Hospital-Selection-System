@@ -118,7 +118,7 @@ const handleSubmit = async () => {
         }
         router.push('/user/medical-history')
       } catch (error) {
-        console.error('Failed to submit form:', error)
+        console.error('提交表单失败:', error)
       } finally {
         loading.value = false
       }
@@ -139,7 +139,7 @@ const loadHistoryDetail = async () => {
     const res = await getMedicalHistoryDetail(historyId.value)
     Object.assign(formData, res.data)
   } catch (error) {
-    console.error('Failed to load history detail:', error)
+    console.error('加载病史详情失败:', error)
   }
 }
 

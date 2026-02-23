@@ -1,5 +1,6 @@
 package com.chen.HospitalSelection.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -18,6 +19,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
+
+    @Value("${file.upload-path:D:/upload/hospital-selection}")
+    private String uploadPath;
 
     /**
      * 配置CORS跨域
@@ -76,25 +80,33 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
 
         // ========== 文件上传目录映射 ==========
-        // 用户头像上传目录
+        // 统一映射 /uploads/** 到上传目录
+        // 这样上传返回的URL如 /uploads/avatar/2025/02/22/xxx.jpg 就能正确访问
+        String uploadLocation = "file:" + uploadPath + "/";
+
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations(uploadLocation);
+
+        // ========== 兼容旧的静态资源映射 ==========
+        // 用户头像上传目录（兼容旧路径）
         registry.addResourceHandler("/static/avatar/**")
-                .addResourceLocations("file:D:/hospital-upload/avatar/");
+                .addResourceLocations(uploadLocation + "avatar/");
 
         // 医院图片上传目录
         registry.addResourceHandler("/static/hospital/**")
-                .addResourceLocations("file:D:/hospital-upload/hospital/");
+                .addResourceLocations(uploadLocation + "hospital/");
 
         // 医生图片上传目录
         registry.addResourceHandler("/static/doctor/**")
-                .addResourceLocations("file:D:/hospital-upload/doctor/");
+                .addResourceLocations(uploadLocation + "doctor/");
 
         // 社区图片上传目录
         registry.addResourceHandler("/static/community/**")
-                .addResourceLocations("file:D:/hospital-upload/community/");
+                .addResourceLocations(uploadLocation + "community/");
 
         // 临时文件目录
         registry.addResourceHandler("/static/temp/**")
-                .addResourceLocations("file:D:/hospital-upload/temp/");
+                .addResourceLocations(uploadLocation + "temp/");
 
         // ========== Swagger UI资源映射 ==========
         // 如果Swagger访问有问题，可以取消下面的注释

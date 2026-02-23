@@ -118,7 +118,7 @@ const loadComments = async () => {
     commentList.value = res.data.list || []
     total.value = res.data.total || 0
   } catch (error) {
-    console.error('Failed to load comments:', error)
+    console.error('加载评论失败:', error)
   } finally {
     loading.value = false
   }
@@ -144,7 +144,7 @@ const handleDelete = async (id) => {
     loadComments()
   } catch (error) {
     if (error !== 'cancel') {
-      console.error('Failed to delete comment:', error)
+      console.error('删除评论失败:', error)
     }
   }
 }
