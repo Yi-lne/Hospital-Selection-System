@@ -61,14 +61,9 @@ public class HospitalSimpleVO {
     private String keyDepartments;
 
     /**
-     * 用户评分
+     * 评分
      */
     private BigDecimal rating;
-
-    /**
-     * 评价数量
-     */
-    private Integer reviewCount;
 
     /**
      * 是否医保定点

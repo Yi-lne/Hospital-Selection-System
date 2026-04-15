@@ -12,11 +12,6 @@
         <result column="level" property="level"/>
     </resultMap>
 
-    <!-- 省市区树形结构映射 -->
-    <resultMap id="AreaTreeResultMap" type="com.chen.HospitalSelection.model.Area" extends="BaseResultMap">
-        <collection property="children" ofType="com.chen.HospitalSelection.model.Area" column="code" select="selectByParentCode"/>
-    </resultMap>
-
     <!-- 基础查询字段 -->
     <sql id="Base_Column_List">
         id, code, name, parent_code, level
@@ -68,116 +63,16 @@
         ORDER BY code ASC
     </select>
 
-    <!-- 查询所有地区 -->
-    <select id="selectAll" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM area_info
-        ORDER BY level ASC, code ASC
-    </select>
-
-    <!-- 查询省市区树 -->
-    <select id="selectTree" resultMap="AreaTreeResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM area_info
-        WHERE level = 1
-        ORDER BY code ASC
-    </select>
-
-    <!-- 条件查询 -->
-    <select id="selectByCondition" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM area_info
-        <where>
-            1=1
-            <if test="name != null and name != ''">
-                AND name LIKE CONCAT('%', #{name}, '%')
-            </if>
-            <if test="parentCode != null and parentCode != ''">
-                AND parent_code = #{parentCode}
-            </if>
-            <if test="level != null">
-                AND level = #{level}
-            </if>
-        </where>
-        ORDER BY level ASC, code ASC
-    </select>
-
-    <!-- 搜索地区（支持模糊搜索） -->
-    <select id="searchAreas" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM area_info
-        WHERE name LIKE CONCAT('%', #{keyword}, '%')
-        <if test="level != null">
-            AND level = #{level}
-        </if>
-        ORDER BY level ASC
-        LIMIT #{limit}
-    </select>
-
-    <!-- 根据名称查询地区 -->
-    <select id="selectByName" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM area_info
-        WHERE name = #{name}
-        LIMIT 1
-    </select>
-
-    <!-- 批量根据编码查询 -->
-    <select id="selectByCodes" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM area_info
-        WHERE code IN
-        <foreach collection="codes" item="code" open="(" separator="," close=")">
-            #{code}
-        </foreach>
-        ORDER BY level ASC, code ASC
-    </select>
-
     <!-- 插入地区 -->
     <insert id="insert" parameterType="com.chen.HospitalSelection.model.Area" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO area_info (code, name, parent_code, level)
         VALUES (#{code}, #{name}, #{parentCode}, #{level})
     </insert>
 
-    <!-- 批量插入地区 -->
-    <insert id="insertBatch">
-        INSERT INTO area_info (code, name, parent_code, level)
-        VALUES
-        <foreach collection="list" item="item" separator=",">
-            (#{item.code}, #{item.name}, #{item.parentCode}, #{item.level})
-        </foreach>
-    </insert>
-
-    <!-- 更新地区 -->
-    <update id="update" parameterType="com.chen.HospitalSelection.model.Area">
-        UPDATE area_info
-        <set>
-            <if test="name != null and name != ''">
-                name = #{name},
-            </if>
-            <if test="parentCode != null and parentCode != ''">
-                parent_code = #{parentCode},
-            </if>
-            <if test="level != null">
-                level = #{level},
-            </if>
-        </set>
-        WHERE id = #{id}
-    </update>
-
     <!-- 删除地区 -->
     <delete id="deleteById">
         DELETE FROM area_info
         WHERE id = #{id}
-    </delete>
-
-    <!-- 批量删除 -->
-    <delete id="deleteBatch">
-        DELETE FROM area_info
-        WHERE id IN
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
     </delete>
 
 </mapper>

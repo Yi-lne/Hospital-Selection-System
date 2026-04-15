@@ -38,23 +38,13 @@
         WHERE id = #{id} AND is_deleted = 0
     </select>
 
-    <!-- 根据ID查询（包含用户信息） -->
-    <select id="selectWithUserById" resultMap="CommentWithUserResultMap">
-        SELECT
-            c.id, c.topic_id, c.user_id, c.parent_id, c.content, c.like_count, c.is_deleted, c.create_time,
-            u.nickname as user_nickname, u.avatar as user_avatar
-        FROM community_comment c
-        LEFT JOIN sys_user u ON c.user_id = u.id AND u.is_deleted = 0
-        WHERE c.id = #{id} AND c.is_deleted = 0
-    </select>
-
     <!-- 根据话题ID查询所有一级评论（包含回复） -->
     <select id="selectByTopicId" resultMap="CommentTreeResultMap">
         SELECT
             c.id, c.topic_id, c.user_id, c.parent_id, c.content, c.like_count, c.is_deleted, c.create_time,
             u.nickname as user_nickname, u.avatar as user_avatar
         FROM community_comment c
-        LEFT JOIN sys_user u ON c.user_id = u.id AND u.is_deleted = 0
+        LEFT JOIN sys_user u ON c.user_id = u.id
         WHERE c.topic_id = #{topicId} AND c.parent_id = 0 AND c.is_deleted = 0
         ORDER BY c.create_time DESC
     </select>
@@ -65,7 +55,7 @@
             c.id, c.topic_id, c.user_id, c.parent_id, c.content, c.like_count, c.is_deleted, c.create_time,
             u.nickname as user_nickname, u.avatar as user_avatar
         FROM community_comment c
-        LEFT JOIN sys_user u ON c.user_id = u.id AND u.is_deleted = 0
+        LEFT JOIN sys_user u ON c.user_id = u.id
         WHERE c.topic_id = #{topicId} AND c.parent_id = 0 AND c.is_deleted = 0
         ORDER BY c.create_time DESC
     </select>
@@ -76,7 +66,7 @@
             c.id, c.topic_id, c.user_id, c.parent_id, c.content, c.like_count, c.is_deleted, c.create_time,
             u.nickname as user_nickname, u.avatar as user_avatar
         FROM community_comment c
-        LEFT JOIN sys_user u ON c.user_id = u.id AND u.is_deleted = 0
+        LEFT JOIN sys_user u ON c.user_id = u.id
         WHERE c.parent_id = #{parentId} AND c.is_deleted = 0
         ORDER BY c.create_time ASC
     </select>
@@ -87,17 +77,9 @@
             c.id, c.topic_id, c.user_id, c.parent_id, c.content, c.like_count, c.is_deleted, c.create_time,
             u.nickname as user_nickname, u.avatar as user_avatar
         FROM community_comment c
-        LEFT JOIN sys_user u ON c.user_id = u.id AND u.is_deleted = 0
+        LEFT JOIN sys_user u ON c.user_id = u.id
         WHERE c.parent_id = #{parentId} AND c.is_deleted = 0
         ORDER BY c.create_time ASC
-    </select>
-
-    <!-- 查询所有评论 -->
-    <select id="selectAll" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM community_comment
-        WHERE is_deleted = 0
-        ORDER BY create_time DESC
     </select>
 
     <!-- 根据用户ID查询评论 -->
@@ -108,72 +90,11 @@
         ORDER BY create_time DESC
     </select>
 
-    <!-- 条件查询 -->
-    <select id="selectByCondition" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM community_comment
-        <where>
-            is_deleted = 0
-            <if test="topicId != null">
-                AND topic_id = #{topicId}
-            </if>
-            <if test="userId != null">
-                AND user_id = #{userId}
-            </if>
-            <if test="parentId != null">
-                AND parent_id = #{parentId}
-            </if>
-            <if test="keyword != null and keyword != ''">
-                AND content LIKE CONCAT('%', #{keyword}, '%')
-            </if>
-        </where>
-        ORDER BY create_time DESC
-    </select>
-
-    <!-- 统计话题的评论数 -->
-    <select id="countByTopicId" resultType="java.lang.Integer">
-        SELECT COUNT(*)
-        FROM community_comment
-        WHERE topic_id = #{topicId} AND is_deleted = 0
-    </select>
-
-    <!-- 统计回复数量（根据父评论ID） -->
-    <select id="countByParentId" resultType="java.lang.Integer">
-        SELECT COUNT(*)
-        FROM community_comment
-        WHERE parent_id = #{parentId} AND is_deleted = 0
-    </select>
-
-    <!-- 统计用户的评论数 -->
-    <select id="countByUserId" resultType="java.lang.Integer">
-        SELECT COUNT(*)
-        FROM community_comment
-        WHERE user_id = #{userId} AND is_deleted = 0
-    </select>
-
-    <!-- 统计一级评论数 -->
-    <select id="countRootComments" resultType="java.lang.Integer">
-        SELECT COUNT(*)
-        FROM community_comment
-        WHERE topic_id = #{topicId} AND parent_id = 0 AND is_deleted = 0
-    </select>
-
     <!-- 插入评论 -->
     <insert id="insert" parameterType="com.chen.HospitalSelection.model.Comment" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO community_comment (topic_id, user_id, parent_id, content, like_count, is_deleted, create_time)
         VALUES (#{topicId}, #{userId}, #{parentId}, #{content}, #{likeCount}, #{isDeleted}, #{createTime})
     </insert>
-
-    <!-- 更新评论 -->
-    <update id="update" parameterType="com.chen.HospitalSelection.model.Comment">
-        UPDATE community_comment
-        <set>
-            <if test="content != null and content != ''">
-                content = #{content},
-            </if>
-        </set>
-        WHERE id = #{id} AND is_deleted = 0
-    </update>
 
     <!-- 更新评论 -->
     <update id="updateById" parameterType="com.chen.HospitalSelection.model.Comment">
@@ -194,13 +115,6 @@
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
-    </update>
-
-    <!-- 更新点赞数 -->
-    <update id="updateLikeCount">
-        UPDATE community_comment
-        SET like_count = #{likeCount}
-        WHERE id = #{commentId}
     </update>
 
     <!-- 增加点赞数 -->
@@ -230,15 +144,4 @@
         SET is_deleted = 1
         WHERE topic_id = #{topicId}
     </update>
-
-    <!-- 批量逻辑删除（保留原有方法名兼容性） -->
-    <update id="deleteBatch">
-        UPDATE community_comment
-        SET is_deleted = 1
-        WHERE id IN
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-    </update>
-
 </mapper>

@@ -186,7 +186,7 @@ const goToBoard = (board) => {
   router.push({
     path: '/community',
     query: {
-      boardLevel2: board.diseaseName
+      boardSub: board.diseaseName
     }
   })
 }

@@ -17,12 +17,12 @@ import java.util.List;
 public class TopicDetailVO {
 
     /**
-     * 话题ID
+     * 话题 ID
      */
     private Long id;
 
     /**
-     * 发布用户ID
+     * 发布用户 ID
      */
     private Long userId;
 
@@ -52,14 +52,9 @@ public class TopicDetailVO {
     private String diseaseName;
 
     /**
-     * 一级板块
+     * 子板块
      */
-    private String boardLevel1;
-
-    /**
-     * 二级板块
-     */
-    private String boardLevel2;
+    private String boardSub;
 
     /**
      * 板块类型

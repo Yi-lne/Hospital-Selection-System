@@ -59,7 +59,6 @@
           <div class="rating-info">
             <el-rate v-model="displayRating" disabled show-score text-color="#ff9900" />
             <span class="rating-text">{{ displayRating }} 分</span>
-            <span class="review-count">({{ doctor.reviewCount || 0 }}条评价)</span>
           </div>
         </div>
 
@@ -129,7 +128,6 @@ const loadDoctorDetail = async () => {
         scheduleTime: res.data.scheduleTime,
         consultationFee: res.data.consultationFee,
         rating: res.data.rating,
-        reviewCount: res.data.reviewCount,
         avatar: res.data.avatar,
         hospitalId: res.data.hospitalId,
         deptId: res.data.deptId

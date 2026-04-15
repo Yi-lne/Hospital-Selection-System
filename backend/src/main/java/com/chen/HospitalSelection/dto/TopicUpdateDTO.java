@@ -8,7 +8,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
- * 话题修改DTO
+ * 话题修改 DTO
  *
  * @author chen
  * @since 2025-01-30
@@ -26,30 +26,23 @@ public class TopicUpdateDTO implements Serializable {
     private String diseaseCode;
 
     /**
-     * 一级板块
+     * 话题板块子类
      */
-    @Size(max = 50, message = "一级板块长度不能超过50个字符")
-    @Schema(description = "一级板块", example = "心血管区")
-    private String boardLevel1;
+    @Size(max = 50, message = "话题板块子类长度不能超过 50 个字符")
+    @Schema(description = "话题板块子类", example = "心血管")
+    private String boardSub;
 
     /**
-     * 二级板块（可选）
+     * 话题板块大类（1 = 疾病板块，2 = 医院评价区，3 = 就医经验区，4 = 康复护理区）
      */
-    @Size(max = 50, message = "二级板块长度不能超过50个字符")
-    @Schema(description = "二级板块", example = "高血压")
-    private String boardLevel2;
-
-    /**
-     * 板块类型（1 = 疾病板块，2 = 医院评价区，3 = 就医经验区，4 = 康复护理区）
-     */
-    @Schema(description = "板块类型", example = "1")
+    @Schema(description = "话题板块大类", example = "1")
     private Integer boardType;
 
     /**
      * 话题标题
      */
     @NotBlank(message = "话题标题不能为空")
-    @Size(max = 200, message = "话题标题长度不能超过200个字符")
+    @Size(max = 200, message = "话题标题长度不能超过 200 个字符")
     @Schema(description = "话题标题", example = "高血压患者如何科学饮食？", required = true)
     private String title;
 

@@ -45,28 +45,16 @@
               {{ hospital.website }}
             </el-link>
             <span v-else>暂无</span>
-          </el-descriptions-item>
+          </el-descriptions-item> 
         </el-descriptions>
-
+        
         <!-- 医院介绍 -->
         <div v-if="hospital.introduction" class="section">
           <h3>医院介绍</h3>
           <p>{{ hospital.introduction }}</p>
         </div>
 
-        <!-- 特色专科 -->
-        <div v-if="hospital.features" class="section">
-          <h3>特色专科</h3>
-          <p>{{ hospital.features }}</p>
-        </div>
-
-        <!-- 交通指南 -->
-        <div v-if="hospital.trafficInfo" class="section">
-          <h3>交通指南</h3>
-          <p>{{ hospital.trafficInfo }}</p>
-        </div>
-
-        <!-- 医生列表模块（增强版）-->
+        <!-- 医生列表模块-->
         <div class="section doctor-section">
           <div class="section-header">
             <h3>医生团队</h3>
@@ -189,7 +177,7 @@ import { ElMessage } from 'element-plus'
 import { Star, StarFilled } from '@element-plus/icons-vue'
 import { getHospitalDetail } from '@/api/hospital'
 import { getHospitalDoctorDepartments } from '@/api/department'
-import { getHospitalDoctors, getHospitalDoctorsByDeptName } from '@/api/doctor'
+import { getHospitalDoctors, filterDoctors } from '@/api/doctor'
 import { checkCollected, addCollection, cancelCollection } from '@/api/collection'
 import { formatHospitalLevel } from '@/utils/hospital'
 import Empty from '@/components/common/Empty.vue'
@@ -209,6 +197,11 @@ const filterDeptName = ref('')
 const filterTitle = ref('')  // 职称筛选
 const currentPage = ref(1)
 const pageSize = ref(12)
+
+// 是否使用后端筛选
+const isUsingBackendFilter = ref(false)
+// 筛选后的总数
+const filterTotal = ref(0)
 
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 
@@ -232,9 +225,8 @@ const titles = computed(() => {
 // 筛选和排序后的医生列表
 const filteredDoctors = computed(() => {
   // 如果有后端筛选结果，使用后端返回的数据
-  if (filteredDoctorsByBackend.value.length > 0) {
-    let doctors = [...filteredDoctorsByBackend.value]
-    return doctors
+  if (isUsingBackendFilter.value) {
+    return filteredDoctorsByBackend.value
   }
 
   // 否则使用前端过滤
@@ -267,13 +259,72 @@ const paginatedDoctors = computed(() => {
 })
 
 // 医生总数
-const doctorTotal = computed(() => filteredDoctors.value.length)
+const doctorTotal = computed(() => {
+  if (isUsingBackendFilter.value) {
+    return filterTotal.value
+  }
+  return filteredDoctors.value.length
+})
 
 // 收藏类型常量（1=医院，2=医生，3=话题）
 const COLLECTION_TYPE = {
   HOSPITAL: 1,
   DOCTOR: 2,
   TOPIC: 3
+}
+
+// 执行后端筛选
+const performBackendFilter = async () => {
+  // 如果两个筛选条件都为空，切换回前端筛选
+  if (!filterDeptName.value && !filterTitle.value) {
+    isUsingBackendFilter.value = false
+    filteredDoctorsByBackend.value = []
+    return
+  }
+  try {
+    // 根据科室名称查找科室 ID
+    const deptId = departments.value.find(d => d.deptName === filterDeptName.value)?.id || null
+    const res = await filterDoctors({
+      hospitalId: hospital.value.id,
+      deptId: deptId,
+      title: filterTitle.value || null,
+      page: 1,
+      pageSize: 1000
+    })
+    filteredDoctorsByBackend.value = res.data.list || []
+    filterTotal.value = res.data.total || 0
+    isUsingBackendFilter.value = true
+  } catch (error) {
+    console.error('后端筛选失败:', error)
+    ElMessage.error('筛选失败，切换为前端筛选')
+    isUsingBackendFilter.value = false
+    filteredDoctorsByBackend.value = []
+  }
+}
+
+// 科室筛选（使用后端 API）
+const handleDeptFilter = async () => {
+  currentPage.value = 1
+  await performBackendFilter()
+}
+
+// 职称筛选（使用后端 API）
+const handleTitleFilter = async () => {
+  currentPage.value = 1
+  await performBackendFilter()
+}
+
+// 页码变化
+const handlePageChange = (page) => {
+  currentPage.value = page
+  // 滚动到医生列表顶部
+  document.querySelector('.doctor-section')?.scrollIntoView({ behavior: 'smooth' })
+}
+
+// 每页数量变化
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
 }
 
 // 加载医院详情
@@ -323,7 +374,6 @@ const loadHospitalDetail = async () => {
       scheduleTime: item.scheduleTime,
       consultationFee: item.consultationFee,
       rating: item.rating,
-      reviewCount: item.reviewCount,
       avatar: item.avatar,
       isCollected: item.isCollected
     }))
@@ -406,33 +456,6 @@ const toggleCollectDoctor = async (doctor) => {
     console.error('切换医生收藏失败:', error)
     ElMessage.error('操作失败')
   }
-}
-
-// 科室筛选（使用后端API按科室名称筛选）
-const handleDeptFilter = async () => {
-  currentPage.value = 1
-  filteredDoctorsByBackend.value = []  // 清空后端筛选结果，改用前端筛选
-
-  // 前端筛选逻辑在 computed 中处理
-}
-
-// 职称筛选（前端联合筛选）
-const handleTitleFilter = () => {
-  currentPage.value = 1
-  // 前端筛选逻辑在 computed 中处理
-}
-
-// 页码变化
-const handlePageChange = (page) => {
-  currentPage.value = page
-  // 滚动到医生列表顶部
-  document.querySelector('.doctor-section')?.scrollIntoView({ behavior: 'smooth' })
-}
-
-// 每页数量变化
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
 }
 
 onMounted(() => {

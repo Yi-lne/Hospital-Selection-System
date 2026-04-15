@@ -80,11 +80,6 @@ public class Hospital {
     private BigDecimal rating;
 
     /**
-     * 评价数量
-     */
-    private Integer reviewCount;
-
-    /**
      * 是否医保定点（0=否，1=是）
      */
     private Integer isMedicalInsurance;

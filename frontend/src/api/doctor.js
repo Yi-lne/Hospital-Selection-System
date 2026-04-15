@@ -34,11 +34,9 @@ export function searchDoctors(keyword, params) {
 export function getDoctorList(params) {
   return Request.get('/doctor/list', { params })
 }
-
 /**
- * 医生筛选
+ * 多条件筛选医生
  */
-export function filterDoctors(dto) {
-  return Request.post('/doctor/filter', dto)
+export function filterDoctors(data) {
+   return Request.post('/doctor/filter', data)
 }
-

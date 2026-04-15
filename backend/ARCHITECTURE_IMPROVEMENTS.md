@@ -120,7 +120,7 @@ List<Doctor> selectBySimpleCondition(
             AND title = #{title}
         </if>
     </where>
-    ORDER BY rating DESC, review_count DESC
+    ORDER BY rating DESC, , DESC
 </select>
 ```
 

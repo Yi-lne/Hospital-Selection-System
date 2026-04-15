@@ -13,13 +13,6 @@ import java.util.List;
 public interface CollectionMapper {
 
     /**
-     * 根据ID查询收藏记录
-     * @param id 主键ID
-     * @return 收藏对象
-     */
-    UserCollectionItem selectById(@Param("id") Long id);
-
-    /**
      * 查询用户是否收藏过目标
      * @param userId 用户ID
      * @param targetType 收藏类型（1=医院，2=医生，3=话题）
@@ -57,41 +50,6 @@ public interface CollectionMapper {
     List<UserCollectionItem> selectTopicsByUserId(@Param("userId") Long userId);
 
     /**
-     * 查询目标的所有收藏记录
-     * @param targetType 收藏类型
-     * @param targetId 目标ID
-     * @return 收藏列表
-     */
-    List<UserCollectionItem> selectByTarget(@Param("targetType") Integer targetType, @Param("targetId") Long targetId);
-
-    /**
-     * 查询医院的所有收藏记录
-     * @param hospitalId 医院ID
-     * @return 收藏列表
-     */
-    List<UserCollectionItem> selectByHospitalId(@Param("hospitalId") Long hospitalId);
-
-    /**
-     * 查询医生的所有收藏记录
-     * @param doctorId 医生ID
-     * @return 收藏列表
-     */
-    List<UserCollectionItem> selectByDoctorId(@Param("doctorId") Long doctorId);
-
-    /**
-     * 查询话题的所有收藏记录
-     * @param topicId 话题ID
-     * @return 收藏列表
-     */
-    List<UserCollectionItem> selectByTopicId(@Param("topicId") Long topicId);
-
-    /**
-     * 查询所有收藏记录
-     * @return 收藏列表
-     */
-    List<UserCollectionItem> selectAll();
-
-    /**
      * 插入收藏记录
      * @param collection 收藏对象
      * @return 影响行数
@@ -124,13 +82,6 @@ public interface CollectionMapper {
     int deleteById(@Param("id") Long id);
 
     /**
-     * 批量删除收藏记录
-     * @param ids ID列表
-     * @return 影响行数
-     */
-    int batchDelete(@Param("ids") List<Long> ids);
-
-    /**
      * 检查用户是否已收藏
      * @param userId 用户ID
      * @param targetType 收藏类型
@@ -140,38 +91,23 @@ public interface CollectionMapper {
     int countByUserAndTarget(@Param("userId") Long userId, @Param("targetType") Integer targetType, @Param("targetId") Long targetId);
 
     /**
-     * 统计目标的收藏数量
-     * @param targetType 收藏类型
-     * @param targetId 目标ID
-     * @return 收藏数量
-     */
-    int countByTarget(@Param("targetType") Integer targetType, @Param("targetId") Long targetId);
-
-    /**
-     * 统计医院的收藏数量
-     * @param hospitalId 医院ID
-     * @return 收藏数量
-     */
-    int countByHospitalId(@Param("hospitalId") Long hospitalId);
-
-    /**
-     * 统计医生的收藏数量
-     * @param doctorId 医生ID
-     * @return 收藏数量
-     */
-    int countByDoctorId(@Param("doctorId") Long doctorId);
-
-    /**
-     * 统计话题的收藏数量
+     * 删除话题的所有收藏记录（级联删除用）
      * @param topicId 话题ID
-     * @return 收藏数量
+     * @return 影响行数
      */
-    int countByTopicId(@Param("topicId") Long topicId);
+    int deleteByTopicId(@Param("topicId") Long topicId);
 
     /**
-     * 统计用户的收藏总数
-     * @param userId 用户ID
-     * @return 收藏数量
+     * 删除医院的所有收藏记录（级联删除用）
+     * @param hospitalId 医院ID
+     * @return 影响行数
      */
-    int countByUserId(@Param("userId") Long userId);
+    int deleteByHospitalId(@Param("hospitalId") Long hospitalId);
+
+    /**
+     * 删除医生的所有收藏记录（级联删除用）
+     * @param doctorId 医生ID
+     * @return 影响行数
+     */
+    int deleteByDoctorId(@Param("doctorId") Long doctorId);
 }

@@ -35,7 +35,7 @@ public class CommunityController {
     private CommunityService communityService;
 
     @Autowired
-    private com.chen.HospitalSelection.util.JwtUtil jwtUtil;
+    private JwtUtil jwtUtil;
 
     /**
      * 话题列表（分页）
@@ -43,21 +43,19 @@ public class CommunityController {
      * 是否需要登录：否
      *
      * @param dto       分页查询参数
-     * @param boardLevel1 一级板块（可选）
-     * @param boardLevel2 二级板块（可选）
+     * @param boardSub 话题板块子类（可选）
      * @return 话题列表
      */
     @GetMapping("/topics")
     @ApiOperation("话题列表（分页）")
     public Result<PageResult<TopicVO>> getTopicList(@Valid PageQueryDTO dto,
-                                                     @RequestParam(required = false) String boardLevel1,
-                                                     @RequestParam(required = false) String boardLevel2,
+                                                     @RequestParam(required = false) String boardSub,
                                                      @RequestParam(required = false) String sortBy,
                                                      @RequestParam(required = false) String keyword) {
         PageResult<TopicVO> pageResult;
-        // If board parameters are provided, use getTopicsByBoard, otherwise use getTopicList
-        if (boardLevel1 != null || boardLevel2 != null) {
-            pageResult = communityService.getTopicsByBoard(boardLevel1, boardLevel2, dto, sortBy, keyword);
+        // If board parameter is provided, use getTopicsByBoard, otherwise use getTopicList
+        if (boardSub != null && !boardSub.isEmpty()) {
+            pageResult = communityService.getTopicsByBoard(boardSub, dto, sortBy, keyword);
         } else {
             pageResult = communityService.getTopicList(dto, sortBy, keyword);
         }
@@ -69,7 +67,7 @@ public class CommunityController {
      * 接口路径：GET /api/community/topic/{id}
      * 是否需要登录：否
      *
-     * @param id 话题ID
+     * @param id 话题 ID
      * @return 话题详情及评论列表
      */
     @GetMapping("/topic/{id}")
@@ -95,7 +93,7 @@ public class CommunityController {
      * 接口路径：POST /api/community/topic
      * 是否需要登录：是
      *
-     * @param dto 话题信息（标题、内容、板块等）
+     * @param dto 话题信息（标题、内容、话题板块等）
      * @return 发布的话题信息
      */
     @PostMapping("/topic")
@@ -113,8 +111,7 @@ public class CommunityController {
         topicVO.setNickname(topicDetail.getNickname());
         topicVO.setAvatar(topicDetail.getAvatar());
         topicVO.setDiseaseCode(topicDetail.getDiseaseCode());
-        topicVO.setBoardLevel1(topicDetail.getBoardLevel1());
-        topicVO.setBoardLevel2(topicDetail.getBoardLevel2());
+        topicVO.setBoardSub(topicDetail.getBoardSub());
         topicVO.setBoardType(topicDetail.getBoardType());
         topicVO.setTitle(topicDetail.getTitle());
         // Generate content summary from full content (limit to 100 chars)
@@ -139,7 +136,7 @@ public class CommunityController {
      * 接口路径：PUT /api/community/topic/{id}
      * 是否需要登录：是
      *
-     * @param id  话题ID
+     * @param id  话题 ID
      * @param dto 修改的话题信息
      * @return 修改后的话题信息
      */
@@ -158,7 +155,7 @@ public class CommunityController {
      * 接口路径：DELETE /api/community/topic/{id}
      * 是否需要登录：是
      *
-     * @param id 话题ID
+     * @param id 话题 ID
      * @return 删除结果
      */
     @DeleteMapping("/topic/{id}")
@@ -174,7 +171,7 @@ public class CommunityController {
      * 接口路径：GET /api/community/topic/{id}/comments
      * 是否需要登录：否
      *
-     * @param id 话题ID
+     * @param id 话题 ID
      * @param dto 分页查询参数（可选）
      * @return 该话题的评论列表
      */
@@ -191,7 +188,7 @@ public class CommunityController {
      * 接口路径：POST /api/community/comment
      * 是否需要登录：是
      *
-     * @param dto 评论信息（话题ID、内容等）
+     * @param dto 评论信息（话题 ID、内容等）
      * @return 发表的评论信息
      */
     @PostMapping("/comment")
@@ -211,7 +208,7 @@ public class CommunityController {
      * 接口路径：POST /api/community/comment/reply
      * 是否需要登录：是
      *
-     * @param dto 评论信息（话题ID、父评论ID、内容等）
+     * @param dto 评论信息（话题 ID、父评论 ID、内容等）
      * @return 发表的回复评论信息
      */
     @PostMapping("/comment/reply")
@@ -219,9 +216,9 @@ public class CommunityController {
     public Result<CommentVO> replyComment(@RequestBody @Valid CommentDTO dto,
                                          HttpServletRequest request) {
         Long userId = getCurrentUserId(request);
-        // parentId必须大于0才能回复
+        // parentId 必须大于 0 才能回复
         if (dto.getParentId() == null || dto.getParentId() <= 0) {
-            return Result.error(400, "回复评论必须指定父评论ID");
+            return Result.error(400, "回复评论必须指定父评论 ID");
         }
         Long commentId = communityService.addComment(userId, dto);
         CommentVO commentVO = new CommentVO();
@@ -234,7 +231,7 @@ public class CommunityController {
      * 接口路径：DELETE /api/community/comment/{id}
      * 是否需要登录：是
      *
-     * @param id 评论ID
+     * @param id 评论 ID
      * @return 删除结果
      */
     @DeleteMapping("/comment/{id}")
@@ -250,7 +247,7 @@ public class CommunityController {
      * 接口路径：POST /api/community/like/topic
      * 是否需要登录：是
      *
-     * @param topicId 话题ID
+     * @param topicId 话题 ID
      * @return 点赞结果
      */
     @PostMapping("/like/topic")
@@ -266,7 +263,7 @@ public class CommunityController {
      * 接口路径：DELETE /api/community/like/topic/{id}
      * 是否需要登录：是
      *
-     * @param id 话题ID
+     * @param id 话题 ID
      * @return 取消点赞结果
      */
     @DeleteMapping("/like/topic/{id}")
@@ -282,7 +279,7 @@ public class CommunityController {
      * 接口路径：POST /api/community/like/comment
      * 是否需要登录：是
      *
-     * @param commentId 评论ID
+     * @param commentId 评论 ID
      * @return 点赞结果
      */
     @PostMapping("/like/comment")
@@ -298,7 +295,7 @@ public class CommunityController {
      * 接口路径：DELETE /api/community/like/comment/{id}
      * 是否需要登录：是
      *
-     * @param id 评论ID
+     * @param id 评论 ID
      * @return 取消点赞结果
      */
     @DeleteMapping("/like/comment/{id}")
@@ -344,14 +341,14 @@ public class CommunityController {
     }
 
     /**
-     * 板块列表
+     * 疾病类型板块列表
      * 接口路径：GET /api/community/boards
      * 是否需要登录：否
      *
-     * @return 所有板块分类
+     * @return 所有疾病板块分类
      */
     @GetMapping("/boards")
-    @ApiOperation("板块列表")
+    @ApiOperation("疾病类型板块列表")
     public Result<List<String>> getBoards() {
         // TODO: Implement service method for dynamic board retrieval
         // For now, return static board list
@@ -368,10 +365,10 @@ public class CommunityController {
     }
 
     /**
-     * 获取当前登录用户ID
+     * 获取当前登录用户 ID
      *
-     * @param request HTTP请求对象
-     * @return 用户ID
+     * @param request HTTP 请求对象
+     * @return 用户 ID
      */
     private Long getCurrentUserId(HttpServletRequest request) {
         try {
@@ -392,33 +389,11 @@ public class CommunityController {
     // ==================== 管理员接口 ====================
 
     /**
-     * 管理员审核话题
-     * 接口路径：PUT /api/community/admin/topic/{id}/moderate
-     * 是否需要登录：是（管理员）
-     *
-     * @param id     话题ID
-     * @param status 状态（1=正常，0=禁用，2=审核中）
-     * @param reason 审核理由（可选）
-     * @return 审核结果
-     */
-    @PutMapping("/admin/topic/{id}/moderate")
-    @ApiOperation("管理员审核话题")
-    public Result<Void> moderateTopic(
-            @PathVariable Long id,
-            @RequestParam Integer status,
-            @RequestParam(required = false) String reason,
-            HttpServletRequest request) {
-        Long userId = getCurrentUserId(request);
-        communityService.moderateTopic(userId, id, status, reason);
-        return Result.success(null, "审核成功");
-    }
-
-    /**
      * 管理员删除话题
      * 接口路径：DELETE /api/community/admin/topic/{id}
      * 是否需要登录：是（管理员）
      *
-     * @param id     话题ID
+     * @param id     话题 ID
      * @param reason 删除理由（可选）
      * @return 删除结果
      */
@@ -438,7 +413,7 @@ public class CommunityController {
      * 接口路径：DELETE /api/community/admin/comment/{id}
      * 是否需要登录：是（管理员）
      *
-     * @param id     评论ID
+     * @param id     评论 ID
      * @param reason 删除理由（可选）
      * @return 删除结果
      */
@@ -451,35 +426,5 @@ public class CommunityController {
         Long userId = getCurrentUserId(request);
         communityService.deleteCommentByAdmin(userId, id, reason);
         return Result.success(null, "删除成功");
-    }
-
-    /**
-     * 获取待审核话题列表
-     * 接口路径：GET /api/community/admin/topics/pending
-     * 是否需要登录：是（管理员）
-     *
-     * @param dto 分页查询参数
-     * @return 待审核话题列表
-     */
-    @GetMapping("/admin/topics/pending")
-    @ApiOperation("获取待审核话题列表")
-    public Result<PageResult<TopicVO>> getPendingTopics(@Valid PageQueryDTO dto) {
-        PageResult<TopicVO> pageResult = communityService.getPendingTopics(dto);
-        return Result.success(pageResult);
-    }
-
-    /**
-     * 获取所有话题（管理视角）
-     * 接口路径：GET /api/community/admin/topics/all
-     * 是否需要登录：是（管理员）
-     *
-     * @param dto 分页查询参数
-     * @return 所有话题列表
-     */
-    @GetMapping("/admin/topics/all")
-    @ApiOperation("获取所有话题（管理视角）")
-    public Result<PageResult<TopicVO>> getAllTopics(@Valid PageQueryDTO dto) {
-        PageResult<TopicVO> pageResult = communityService.getAllTopics(dto);
-        return Result.success(pageResult);
     }
 }

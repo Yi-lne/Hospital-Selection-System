@@ -29,11 +29,6 @@ public class Role {
     private String roleCode;
 
     /**
-     * 逻辑删除（0=未删，1=已删）
-     */
-    private Integer isDeleted;
-
-    /**
      * 创建时间
      */
     private LocalDateTime createTime;

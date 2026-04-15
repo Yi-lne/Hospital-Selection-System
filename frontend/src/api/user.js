@@ -1,4 +1,4 @@
-import Request from '@/utils/request'
+  import Request from '@/utils/request'
 
 /**
  * 用户登录
@@ -42,14 +42,6 @@ export function updateUserInfo(data) {
  */
 export function changePassword(data) {
   return Request.put('/user/password', data)
-}
-
-/**
- * 重置密码
- * 后端期望: { phone: string, verificationCode: string, newPassword: string }
- */
-export function resetPassword(data) {
-  return Request.post('/user/password/reset', data)
 }
 
 /**

@@ -93,14 +93,9 @@ public class HospitalVO {
     private String intro;
 
     /**
-     * 用户评分（0.00-5.00）
+     * 评分（0.00-5.00）
      */
     private BigDecimal rating;
-
-    /**
-     * 评价数量
-     */
-    private Integer reviewCount;
 
     /**
      * 是否医保定点（0 = 否，1 = 是）

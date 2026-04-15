@@ -29,19 +29,14 @@ public class Topic {
     private String diseaseCode;
 
     /**
-     * 一级板块（心血管区、内分泌区、肿瘤区、儿科区等）
-     */
-    private String boardLevel1;
-
-    /**
-     * 二级板块（具体疾病，如高血压、冠心病、糖尿病等）
-     */
-    private String boardLevel2;
-
-    /**
-     * 板块类型（1=疾病板块，2=医院评价区，3=就医经验区，4=康复护理区）
+     * 话题板块大类（1=疾病板块，2=医院评价区，3=就医经验区，4=康复护理区）
      */
     private Integer boardType;
+
+    /**
+     * 话题板块子类（心血管、内分泌、肿瘤、儿科等）
+     */
+    private String boardSub;
 
     /**
      * 话题标题
@@ -72,11 +67,6 @@ public class Topic {
      * 浏览数
      */
     private Integer viewCount;
-
-    /**
-     * 状态（1=正常，0=禁用，2=审核中）
-     */
-    private Integer status;
 
     /**
      * 逻辑删除（0=未删，1=已删）

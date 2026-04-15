@@ -75,4 +75,9 @@ public class UserVO {
      * 角色列表（如：["user", "admin"]）
      */
     private List<String> roles;
+
+    /**
+     * 最后更新时间
+     */
+     private LocalDateTime updateTime;
 }

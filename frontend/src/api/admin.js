@@ -129,34 +129,11 @@ export const adminApi = {
   // ==================== 社区管理 ====================
 
   /**
-   * 获取所有话题（管理员视角）
-   */
-  getAllTopics(params) {
-    return Request.get('/community/admin/topics/all', { params })
-  },
-
-  /**
-   * 获取待审核话题列表
-   */
-  getPendingTopics(params) {
-    return Request.get('/community/admin/topics/pending', { params })
-  },
-
-  /**
    * 管理员删除话题
    */
   deleteTopic(id, reason) {
     return Request.delete(`/community/admin/topic/${id}`, {
       params: { reason }
-    })
-  },
-
-  /**
-   * 管理员审核话题
-   */
-  moderateTopic(id, status, reason) {
-    return Request.put(`/community/admin/topic/${id}/moderate`, null, {
-      params: { status, reason }
     })
   },
 

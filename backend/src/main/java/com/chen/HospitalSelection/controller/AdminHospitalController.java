@@ -179,31 +179,6 @@ public class AdminHospitalController {
     }
 
     /**
-     * 批量添加科室
-     * 接口路径：POST /api/admin/department/batch
-     * 是否需要登录：是（管理员）
-     *
-     * @param hospitalId 医院ID
-     * @param deptNames 科室名称列表
-     * @return 添加成功的科室数量
-     */
-    @PostMapping("/department/batch")
-    @ApiOperation("批量添加科室")
-    public Result<Map<String, Object>> batchCreateDepartments(
-            @RequestParam Long hospitalId,
-            @RequestBody List<String> deptNames,
-            HttpServletRequest request) {
-        checkAdminPermission(request);
-        int count = adminHospitalService.batchCreateDepartments(hospitalId, deptNames);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("hospitalId", hospitalId);
-        result.put("count", count);
-
-        return Result.success(result, "批量添加科室完成，成功添加" + count + "个科室");
-    }
-
-    /**
      * 更新科室
      * 接口路径：PUT /api/admin/department/{id}
      * 是否需要登录：是（管理员）
@@ -256,23 +231,6 @@ public class AdminHospitalController {
         checkAdminPermission(request);
         Long doctorId = adminHospitalService.createDoctor(dto);
         return Result.success(doctorId, "医生添加成功");
-    }
-
-    /**
-     * 批量导入医生
-     * 接口路径：POST /api/admin/doctor/import
-     * 是否需要登录：是（管理员）
-     *
-     * @param file Excel文件
-     * @return 导入结果统计
-     */
-    @PostMapping("/doctor/import")
-    @ApiOperation("批量导入医生")
-    public Result<Map<String, Object>> importDoctors(@RequestParam("file") MultipartFile file,
-                                                      HttpServletRequest request) {
-        checkAdminPermission(request);
-        Map<String, Object> result = adminHospitalService.importDoctors(file);
-        return Result.success(result);
     }
 
     /**
@@ -341,25 +299,6 @@ public class AdminHospitalController {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException("权限验证失败，请重新登录");
-        }
-    }
-
-    /**
-     * 获取当前登录用户ID
-     */
-    private Long getCurrentUserId(HttpServletRequest request) {
-        try {
-            String token = request.getHeader("Authorization");
-            if (token != null && token.startsWith("Bearer ")) {
-                token = token.substring(7);
-            }
-            Long userId = jwtUtil.getUserIdFromToken(token);
-            if (userId == null) {
-                throw new RuntimeException("用户未登录");
-            }
-            return userId;
-        } catch (Exception e) {
-            throw new RuntimeException("获取用户信息失败，请重新登录");
         }
     }
 }

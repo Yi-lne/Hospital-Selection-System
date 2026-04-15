@@ -86,16 +86,10 @@ public class HospitalUpdateDTO implements Serializable {
     private String intro;
 
     /**
-     * 用户评分（0.00-5.00）
+     * 评分（0.00-5.00）
      */
     @Schema(description = "用户评分", example = "4.8")
     private BigDecimal rating;
-
-    /**
-     * 评价数量
-     */
-    @Schema(description = "评价数量", example = "100")
-    private Integer reviewCount;
 
     /**
      * 是否医保定点

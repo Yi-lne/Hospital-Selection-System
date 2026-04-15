@@ -7,12 +7,12 @@
       size="large"
     >
       <el-icon class="ai-icon"><MagicStick /></el-icon>
-      AI智能筛选
+      AI智能推荐
     </el-button>
 
     <el-dialog
       v-model="showDialog"
-      title="AI智能筛选"
+      title="AI智能推荐"
       width="600px"
       :close-on-click-modal="false"
     >
@@ -56,7 +56,7 @@
           :loading="loading"
           :disabled="!userQuery.trim()"
         >
-          智能筛选
+          智能推荐
         </el-button>
       </template>
     </el-dialog>

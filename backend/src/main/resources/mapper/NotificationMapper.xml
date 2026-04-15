@@ -23,25 +23,11 @@
         ORDER BY create_time DESC
     </select>
 
-    <select id="selectUnreadByUserId" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM user_notification
-        WHERE user_id = #{userId}
-        AND is_read = 0
-        ORDER BY create_time DESC
-    </select>
-
     <select id="countUnread" resultType="int">
         SELECT COUNT(*)
         FROM user_notification
         WHERE user_id = #{userId}
         AND is_read = 0
-    </select>
-
-    <select id="selectById" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM user_notification
-        WHERE id = #{id}
     </select>
 
     <insert id="insert" parameterType="com.chen.HospitalSelection.model.Notification">

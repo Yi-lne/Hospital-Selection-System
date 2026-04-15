@@ -38,9 +38,6 @@ public class ZhipuAIService {
 
     /**
      * 分析用户查询，返回医院筛选条件
-     *
-     * @param userQuery 用户的自然语言输入
-     * @return 筛选条件DTO
      */
     public HospitalFilterDTO analyzeQuery(String userQuery) {
         try {
@@ -58,16 +55,16 @@ public class ZhipuAIService {
             log.info("AI分析完成，结果：{}", filter);
             return filter;
 
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("AI分析失败，返回默认筛选条件", e);
-            // 失败时返回空筛选条件，用户可以手动筛选
+            log.error("AI分析失败", e);
             return new HospitalFilterDTO();
         }
     }
 
     /**
-     * 构建AI提示词（关键！）
-     * 使用结构化提示，让AI返回标准JSON
+     * 构建AI提示词
      */
     private String buildPrompt(String userQuery) {
         StringBuilder prompt = new StringBuilder();
@@ -82,19 +79,27 @@ public class ZhipuAIService {
         prompt.append("  \"areaCode\": \"区县6位代码（如110101表示东城区，没有则填null）\",\n");
         prompt.append("  \"hospitalLevel\": \"医院等级（grade3A=三甲、grade3B=三乙、grade2A=二甲、grade2B=二乙，没有则填null）\",\n");
         prompt.append("  \"deptName\": \"科室名称（如神经内科、心内科、骨科等，没有则填null）\",\n");
-        prompt.append("  \"isMedicalInsurance\": \"是否医保定点（true/false，不确定则填null）\",\n");
         prompt.append("  \"keyDepartments\": \"重点科室关键词（没有则填null）\",\n");
+        prompt.append("  \"isValidQuery\": \"用户查询是否有效且地区在服务范围内（true/false）\",\n");
         prompt.append("  \"reasoning\": \"简要说明推理过程\"\n");
         prompt.append("}\n\n");
+        prompt.append("【isValidQuery判断规则】\n");
+        prompt.append("1. 用户查询是乱码、无意义、与医疗完全无关 → false\n");
+        prompt.append("2. 用户提到具体地区，但地区不在中国大陆（如美国、日本、泰国曼谷、印度新德里、欧洲、月球等） → false\n");
+        prompt.append("3. 用户未提及具体地区（如'推荐神经内科'、'头疼找什么医院'） → true（地区字段填null，表示不限制地区）\n");
+        prompt.append("4. 用户提到的地区在中国大陆 → true（填写对应地区代码）\n\n");
         prompt.append("【重要规则】\n");
         prompt.append("1. 只返回JSON，不要其他任何文字说明\n");
         prompt.append("2. 地区代码使用中国大陆6位行政区划代码：\n");
-        prompt.append("   - 北京：110000，上海市：310000，广东：440000\n");
-        prompt.append("   - 北京市：110100，上海市：310100，广州市：440100，深圳市：440300\n");
+        prompt.append("   - 北京：110000，上海市：310000，天津：120000，重庆：500000\n");
+        prompt.append("   - 广东：440000，浙江：330000，江苏：320000，四川：510000，新疆：650000\n");
+        prompt.append("   - 北京市：110100，上海市：310100，广州市：440100，深圳市：440300，杭州市：330100\n");
+        prompt.append("   - 乌鲁木齐市：650100（新疆），成都市：510100（四川），南京市：320100（江苏）\n");
         prompt.append("3. 根据症状智能推断科室（如头痛→神经内科、胸痛→心内科、咳嗽→呼吸内科）\n");
         prompt.append("4. 如果用户提到'最好的'、'三甲'，hospitalLevel填grade3A\n");
         prompt.append("5. 如果信息不足或不确定，对应字段填null\n");
-        prompt.append("6. isMedicalInsurance字段必须是布尔值true/false或null，不能是字符串\n\n");
+        prompt.append("6. isMedicalInsurance字段必须是布尔值true/false或null，不能是字符串\n");
+        prompt.append("7. 【关键】如果isValidQuery为false，所有其他字段必须设为null\n\n");
         prompt.append("【常见科室推断规则】\n");
         prompt.append("- 神经系统：头痛、头晕、失眠、癫痫、中风、帕金森 → 神经内科\n");
         prompt.append("- 心血管：胸痛、心慌、高血压、心悸、心脏病 → 心内科\n");
@@ -115,22 +120,17 @@ public class ZhipuAIService {
      * 调用智谱AI API
      */
     private String callZhipuAPI(String prompt) {
-        // 构建请求体
         Map<String, Object> request = new HashMap<>();
         request.put("model", model);
 
-        // 构建消息
         Map<String, String> userMessage = new HashMap<>();
         userMessage.put("role", "user");
         userMessage.put("content", prompt);
 
         request.put("messages", new Object[]{userMessage});
-
-        // 设置参数（降低随机性，提高稳定性）
         request.put("temperature", 0.3);
         request.put("max_tokens", 1000);
 
-        // 设置请求头（智谱AI使用 Bearer {token} 格式）
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Bearer " + apiKey);
@@ -138,7 +138,6 @@ public class ZhipuAIService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
 
         try {
-            // 发送POST请求
             ResponseEntity<String> response = restTemplate.exchange(
                 apiUrl,
                 HttpMethod.POST,
@@ -146,18 +145,14 @@ public class ZhipuAIService {
                 String.class
             );
 
-            // 解析响应
             JsonNode rootNode = objectMapper.readTree(response.getBody());
 
-            // 检查是否有错误
             if (rootNode.has("error")) {
                 String errorMsg = rootNode.get("error").get("message").asText();
                 throw new RuntimeException("智谱AI API错误: " + errorMsg);
             }
 
-            // 提取AI返回的内容
             String content = rootNode.get("choices").get(0).get("message").get("content").asText();
-
             log.info("智谱AI API调用成功");
             return content;
 
@@ -172,7 +167,6 @@ public class ZhipuAIService {
      */
     private HospitalFilterDTO parseAIResponse(String aiResponse) {
         try {
-            // 提取JSON部分（AI可能返回额外文字）
             int jsonStart = aiResponse.indexOf("{");
             int jsonEnd = aiResponse.lastIndexOf("}") + 1;
 
@@ -184,7 +178,14 @@ public class ZhipuAIService {
             String jsonStr = aiResponse.substring(jsonStart, jsonEnd);
             JsonNode result = objectMapper.readTree(jsonStr);
 
-            // 构建筛选条件
+            // 检查AI是否认为查询无效
+            if (result.has("isValidQuery") && !result.get("isValidQuery").isNull()) {
+                boolean isValid = result.get("isValidQuery").asBoolean(false);
+                if (!isValid) {
+                    throw new IllegalArgumentException("无法理解您的查询，请输入与医院、科室、症状或疾病相关的描述");
+                }
+            }
+
             HospitalFilterDTO filter = new HospitalFilterDTO();
 
             if (result.has("provinceCode") && !result.get("provinceCode").isNull()) {
@@ -211,7 +212,6 @@ public class ZhipuAIService {
                 filter.setKeyDepartments(result.get("keyDepartments").asText());
             }
 
-            // 处理isMedicalInsurance字段
             if (result.has("isMedicalInsurance") && !result.get("isMedicalInsurance").isNull()) {
                 JsonNode insuranceNode = result.get("isMedicalInsurance");
                 if (insuranceNode.isBoolean()) {
@@ -221,18 +221,17 @@ public class ZhipuAIService {
                 }
             }
 
-            // 设置默认分页参数
             filter.setPage(1);
             filter.setPageSize(10);
 
-            // 记录推理过程（日志）
             if (result.has("reasoning") && !result.get("reasoning").isNull()) {
-                String reasoning = result.get("reasoning").asText();
-                log.info("AI推理过程：{}", reasoning);
+                log.info("AI推理过程：{}", result.get("reasoning").asText());
             }
 
             return filter;
 
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             log.error("解析AI响应失败：{}", aiResponse, e);
             return new HospitalFilterDTO();

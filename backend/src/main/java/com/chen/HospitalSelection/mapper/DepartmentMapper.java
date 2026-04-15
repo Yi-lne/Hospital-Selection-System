@@ -46,19 +46,6 @@ public interface DepartmentMapper {
     Department selectByHospitalAndName(@Param("hospitalId") Long hospitalId, @Param("deptName") String deptName);
 
     /**
-     * 模糊搜索科室（按名称）
-     * @param deptName 科室名称（模糊）
-     * @return 科室列表
-     */
-    List<Department> searchByName(@Param("deptName") String deptName);
-
-    /**
-     * 查询所有科室
-     * @return 科室列表
-     */
-    List<Department> selectAll();
-
-    /**
      * 查询所有有医生的科室（去重）
      * @return 有医生的科室列表（按科室名称去重）
      */
@@ -70,13 +57,6 @@ public interface DepartmentMapper {
      * @return 影响行数
      */
     int insert(Department department);
-
-    /**
-     * 批量插入科室
-     * @param departments 科室列表
-     * @return 影响行数
-     */
-    int batchInsert(@Param("departments") List<Department> departments);
 
     /**
      * 更新科室信息
@@ -100,25 +80,11 @@ public interface DepartmentMapper {
     int deleteByHospitalId(@Param("hospitalId") Long hospitalId);
 
     /**
-     * 批量逻辑删除科室
-     * @param ids 科室ID列表
-     * @return 影响行数
-     */
-    int batchDelete(@Param("ids") List<Long> ids);
-
-    /**
      * 获取某医院所有医生的所属科室（去重）
      * @param hospitalId 医院ID
      * @return 该医院医生所属的科室列表（按科室名称去重）
      */
     List<Department> selectDepartmentsByHospitalDoctors(@Param("hospitalId") Long hospitalId);
-
-    /**
-     * 统计医院的科室数量
-     * @param hospitalId 医院ID
-     * @return 科室数量
-     */
-    int countByHospitalId(@Param("hospitalId") Long hospitalId);
 
     /**
      * 根据医院ID恢复所有科室

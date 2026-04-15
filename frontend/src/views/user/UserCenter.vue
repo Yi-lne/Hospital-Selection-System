@@ -51,11 +51,6 @@
             <el-icon><Document /></el-icon>
             <span>病史管理</span>
           </el-menu-item>
-          <el-menu-item index="messages">
-            <el-icon><ChatLineSquare /></el-icon>
-            <span>私信消息</span>
-            <el-badge v-if="unreadCount > 0" :value="unreadCount" class="badge" />
-          </el-menu-item>
         </el-menu>
       </el-col>
 
@@ -152,13 +147,12 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
-  User, Star, ChatDotRound, Document, ChatLineSquare,
+  User, Star, ChatDotRound, Document,
   View, Edit, Search
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores'
 import { getMyTopics } from '@/api/community'
 import { getCollectionList } from '@/api/collection'
-import { getMessageList } from '@/api/message'
 import { formatRelativeTime } from '@/utils/date'
 import Empty from '@/components/common/Empty.vue'
 
@@ -174,7 +168,6 @@ const stats = reactive({
   viewCount: 0
 })
 const activities = ref([])
-const unreadCount = ref(0)
 
 const activeMenu = computed(() => {
   const path = route.path
@@ -182,7 +175,6 @@ const activeMenu = computed(() => {
   if (path.includes('/user/collection')) return 'collection'
   if (path.includes('/user/topics')) return 'topics'
   if (path.includes('/user/medical-history')) return 'medical-history'
-  if (path.includes('/message')) return 'messages'
   return ''
 })
 
@@ -224,10 +216,6 @@ const loadStats = async () => {
     const collectionRes = await getCollectionList()
     stats.collectionCount = collectionRes.data.total || 0
 
-    // 获取未读消息数
-    const messageRes = await getMessageList()
-    unreadCount.value = messageRes.data?.unreadCount || 0
-
     // 评论数量（模拟数据）
     stats.commentCount = 0
     stats.viewCount = 0
@@ -242,8 +230,7 @@ const handleMenuSelect = (index) => {
     profile: '/user/profile',
     collection: '/user/collection',
     topics: '/user/topics',
-    'medical-history': '/user/medical-history',
-    messages: '/message/conversations'
+    'medical-history': '/user/medical-history'
   }
   if (routes[index]) {
     router.push(routes[index])
@@ -311,10 +298,6 @@ onMounted(() => {
 
   .side-menu {
     border-right: none;
-
-    .badge {
-      margin-left: 8px;
-    }
   }
 
   .content-card {

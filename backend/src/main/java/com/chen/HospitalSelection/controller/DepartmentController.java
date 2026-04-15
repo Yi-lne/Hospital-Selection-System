@@ -76,18 +76,4 @@ public class DepartmentController {
         return Result.success(departments);
     }
 
-    /**
-     * 科室详情
-     * 接口路径：GET /api/department/{id}
-     * 是否需要登录：否
-     *
-     * @param id 科室ID
-     * @return 科室详细信息
-     */
-    @GetMapping("/{id}")
-    @ApiOperation("科室详情")
-    public Result<DepartmentVO> getDepartmentDetail(@PathVariable Long id) {
-        DepartmentVO departmentVO = departmentService.getDepartmentDetail(id);
-        return Result.success(departmentVO);
-    }
 }

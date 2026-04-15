@@ -108,31 +108,6 @@ public class CollectionController {
     }
 
     /**
-     * 收藏数量统计
-     * 接口路径：GET /api/collection/count
-     * 是否需要登录：是
-     *
-     * @return 各类型收藏数量统计
-     */
-    @GetMapping("/count")
-    @ApiOperation("收藏数量统计")
-    public Result<Map<String, Long>> getCollectionCount(HttpServletRequest request) {
-        Long userId = getCurrentUserId(request);
-        Map<Integer, Long> countMap = collectionService.getCollectionCount(userId);
-
-        // 转换为字符串key的Map
-        Map<String, Long> resultMap = new java.util.HashMap<>();
-        if (countMap != null) {
-            countMap.forEach((key, value) -> {
-                String typeName = getTargetTypeName(key);
-                resultMap.put(typeName, value);
-            });
-        }
-
-        return Result.success(resultMap);
-    }
-
-    /**
      * 获取当前登录用户ID
      * 优先从SecurityContext获取，其次从JWT token解析
      *
@@ -161,28 +136,6 @@ public class CollectionController {
             throw new RuntimeException("用户未登录");
         } catch (Exception e) {
             throw new RuntimeException("获取用户信息失败，请重新登录");
-        }
-    }
-
-    /**
-     * 获取收藏类型名称
-     *
-     * @param targetType 类型编号
-     * @return 类型名称
-     */
-    private String getTargetTypeName(Integer targetType) {
-        if (targetType == null) {
-            return "未知";
-        }
-        switch (targetType) {
-            case 1:
-                return "医院";
-            case 2:
-                return "医生";
-            case 3:
-                return "话题";
-            default:
-                return "未知";
         }
     }
 }

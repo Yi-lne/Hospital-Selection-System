@@ -65,11 +65,6 @@ public class Doctor {
     private BigDecimal rating;
 
     /**
-     * 评价数量
-     */
-    private Integer reviewCount;
-
-    /**
      * 逻辑删除（0=未删，1=已删）
      */
     private Integer isDeleted;

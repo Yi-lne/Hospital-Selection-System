@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -149,44 +148,6 @@ public class HospitalServiceImpl implements HospitalService {
                 .collect(Collectors.toList());
 
         return new PageResult<>(pageInfo.getTotal(), dto.getPage(), dto.getPageSize(), voList);
-    }
-
-    @Override
-    public List<String> getSearchSuggestions(String keyword) {
-        log.info("获取搜索建议，关键词：{}", keyword);
-
-        // 使用模糊搜索查询医院名称包含关键词的医院
-        List<Hospital> hospitalList = hospitalMapper.searchByKeyword(keyword);
-
-        // 提取医院名称
-        return hospitalList.stream()
-                .map(Hospital::getHospitalName)
-                .limit(10)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public PageResult<HospitalSimpleVO> getHospitalsByCity(String cityCode, PageQueryDTO dto) {
-        log.info("查询城市医院列表，城市编码：{}", cityCode);
-
-        HospitalFilterDTO filterDTO = new HospitalFilterDTO();
-        filterDTO.setCityCode(cityCode);
-        filterDTO.setPage(dto.getPage());
-        filterDTO.setPageSize(dto.getPageSize());
-
-        return filterHospitals(filterDTO);
-    }
-
-    @Override
-    public PageResult<HospitalSimpleVO> getHospitalsByLevel(String level, PageQueryDTO dto) {
-        log.info("查询等级医院列表，等级：{}", level);
-
-        HospitalFilterDTO filterDTO = new HospitalFilterDTO();
-        filterDTO.setHospitalLevel(level);
-        filterDTO.setPage(dto.getPage());
-        filterDTO.setPageSize(dto.getPageSize());
-
-        return filterHospitals(filterDTO);
     }
 
     @Override

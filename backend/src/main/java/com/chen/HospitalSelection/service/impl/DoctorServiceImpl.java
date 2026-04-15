@@ -132,17 +132,6 @@ public class DoctorServiceImpl implements DoctorService {
     }
 
     @Override
-    public List<DoctorSimpleVO> getDoctorsByHospitalAndDept(Long hospitalId, Long deptId) {
-        log.info("查询医院科室医生列表，医院ID：{}，科室ID：{}", hospitalId, deptId);
-
-        List<Doctor> doctorList = doctorMapper.selectByHospitalAndDept(hospitalId, deptId);
-
-        return doctorList.stream()
-                .map(this::convertToSimpleVO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public List<DoctorSimpleVO> getDoctorsByHospitalAndDeptName(Long hospitalId, String deptName) {
         log.info("查询医院科室医生列表（按科室名称），医院ID：{}，科室名称：{}", hospitalId, deptName);
 
@@ -175,18 +164,6 @@ public class DoctorServiceImpl implements DoctorService {
                 .collect(Collectors.toList());
 
         return new PageResult<>(pageInfo.getTotal(), dto.getPage(), dto.getPageSize(), voList);
-    }
-
-    @Override
-    public PageResult<DoctorSimpleVO> getDoctorsByTitle(String title, PageQueryDTO dto) {
-        log.info("查询职称医生列表，职称：{}", title);
-
-        DoctorFilterDTO filterDTO = new DoctorFilterDTO();
-        filterDTO.setTitle(title);
-        filterDTO.setPage(dto.getPage());
-        filterDTO.setPageSize(dto.getPageSize());
-
-        return filterDoctors(filterDTO);
     }
 
     /**

@@ -54,18 +54,4 @@ public class CaptchaController {
         return Result.success(valid, valid ? "验证成功" : "验证失败");
     }
 
-    /**
-     * 验证并消耗验证码（用于登录/注册）
-     * 接口路径：POST /api/captcha/verify-consume
-     * 是否需要登录：否
-     *
-     * @param dto 验证信息
-     * @return 验证结果
-     */
-    @PostMapping("/verify-consume")
-    @ApiOperation("验证并消耗验证码")
-    public Result<Boolean> verifyAndConsumeCaptcha(@RequestBody @Valid CaptchaVerifyDTO dto) {
-        boolean valid = captchaService.verifyAndConsumeCaptcha(dto);
-        return Result.success(valid, valid ? "验证成功" : "验证失败");
-    }
 }

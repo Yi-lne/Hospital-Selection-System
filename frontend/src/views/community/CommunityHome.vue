@@ -74,8 +74,8 @@
                   <div v-if="topic.boardType === 1 && topic.diseaseName" class="right-tag">
                     {{ topic.diseaseName }}
                   </div>
-                  <div v-else-if="topic.boardLevel1" class="right-tag">
-                    {{ topic.boardLevel1 }}
+                  <div v-else-if="topic.boardSub" class="right-tag">
+                    {{ topic.boardSub }}
                   </div>
                 </div>
                 <div class="topic-content">
@@ -253,7 +253,7 @@ const loadTopics = async () => {
 
     // 添加筛选条件
     if (selectedHotBoard.value) {
-      params.boardLevel1 = selectedHotBoard.value
+      params.boardSub = selectedHotBoard.value
     }
 
     // 搜索关键词
@@ -356,7 +356,7 @@ const formatTime = (time) => {
   return date.toLocaleDateString()
 }
 
-// 板块类型映射
+// 话题板块大类映射
 const boardTypeMap = {
   1: '疾病板块',
   2: '医院评价',
@@ -364,7 +364,7 @@ const boardTypeMap = {
   4: '康复护理'
 }
 
-// 获取板块类型名称
+// 获取话题板块大类名称
 const getBoardTypeName = (boardType) => {
   if (!boardType) return ''
   return boardTypeMap[boardType] || ''

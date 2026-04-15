@@ -67,22 +67,6 @@ public interface NotificationService {
     void createReplyNotification(Long commentId, Long commentAuthorId, String replierName);
 
     /**
-     * 创建话题删除通知
-     * @param topicId 话题ID
-     * @param topicAuthorId 话题作者ID
-     * @param reason 删除原因
-     */
-    void createTopicDeleteNotification(Long topicId, Long topicAuthorId, String reason);
-
-    /**
-     * 创建评论删除通知
-     * @param commentId 评论ID
-     * @param commentAuthorId 评论作者ID
-     * @param reason 删除原因
-     */
-    void createCommentDeleteNotification(Long commentId, Long commentAuthorId, String reason);
-
-    /**
      * 创建点赞通知
      * @param targetId 目标ID（话题ID或评论ID）
      * @param targetAuthorId 目标作者ID

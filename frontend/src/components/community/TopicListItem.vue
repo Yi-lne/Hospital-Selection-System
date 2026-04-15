@@ -9,8 +9,8 @@
         </div>
       </div>
       <div class="board-tags">
-        <el-tag v-if="topic.boardLevel1" size="small" type="info">
-          {{ topic.boardLevel1 }}
+        <el-tag v-if="topic.boardSub" size="small" type="info">
+          {{ topic.boardSub }}
         </el-tag>
       </div>
     </div>
@@ -18,7 +18,7 @@
     <h3 class="topic-title">{{ topic.title }}</h3>
     <p class="topic-content">{{ topic.content }}</p>
 
-    <div v-if="topic.diseaseName || topic.boardLevel1" class="topic-tags">
+    <div v-if="topic.diseaseName || topic.boardSub" class="topic-tags">
       <el-tag v-if="topic.diseaseName" size="small" type="success">
         {{ topic.diseaseName }}
       </el-tag>

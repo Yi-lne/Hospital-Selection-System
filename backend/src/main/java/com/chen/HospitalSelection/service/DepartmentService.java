@@ -44,27 +44,4 @@ public interface DepartmentService {
      * @return 该医院医生所属的科室列表（按科室名称去重）
      */
     List<DepartmentVO> getDepartmentsByHospitalDoctors(Long hospitalId);
-
-    /**
-     * 获取科室详情
-     *
-     * @param deptId 科室ID
-     * @return 科室详细信息
-     */
-    DepartmentVO getDepartmentDetail(Long deptId);
-
-    /**
-     * 根据科室名称查询科室列表（模糊搜索）
-     *
-     * @param deptName 科室名称（支持模糊搜索）
-     * @return 科室列表
-     */
-    List<DepartmentVO> searchDepartmentsByName(String deptName);
-
-    /**
-     * 获取所有科室类型（用于筛选）
-     *
-     * @return 科室名称列表（去重）
-     */
-    List<String> getAllDepartmentTypes();
 }

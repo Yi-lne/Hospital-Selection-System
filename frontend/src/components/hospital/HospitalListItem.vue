@@ -21,7 +21,6 @@
           text-color="#ff9900"
           score-template="{value}"
         />
-        <span class="review-count">{{ hospital.reviewCount || 0 }}条评价</span>
       </div>
     </div>
 
@@ -157,13 +156,6 @@ const handleCollect = () => {
 
     .rating {
       text-align: right;
-
-      .review-count {
-        display: block;
-        font-size: 12px;
-        color: #909399;
-        margin-top: 4px;
-      }
     }
   }
 

@@ -5,9 +5,11 @@ import com.chen.HospitalSelection.dto.PageQueryDTO;
 import com.chen.HospitalSelection.dto.TopicPublishDTO;
 import com.chen.HospitalSelection.dto.TopicUpdateDTO;
 import com.chen.HospitalSelection.exception.BusinessException;
+import com.chen.HospitalSelection.mapper.CollectionMapper;
 import com.chen.HospitalSelection.mapper.CommentMapper;
 import com.chen.HospitalSelection.mapper.DiseaseMapper;
 import com.chen.HospitalSelection.mapper.LikeMapper;
+import com.chen.HospitalSelection.mapper.ReportMapper;
 import com.chen.HospitalSelection.mapper.TopicMapper;
 import com.chen.HospitalSelection.mapper.UserMapper;
 import com.chen.HospitalSelection.model.Comment;
@@ -54,6 +56,12 @@ public class CommunityServiceImpl implements CommunityService {
     private LikeMapper likeMapper;
 
     @Autowired
+    private CollectionMapper collectionMapper;
+
+    @Autowired
+    private ReportMapper reportMapper;
+
+    @Autowired
     private UserMapper userMapper;
 
     @Autowired
@@ -69,16 +77,16 @@ public class CommunityServiceImpl implements CommunityService {
     public PageResult<TopicVO> getTopicList(PageQueryDTO dto, String sortBy, String keyword) {
         log.info("分页查询话题列表，页码：{}，每页大小：{}，排序方式：{}，关键词：{}", dto.getPage(), dto.getPageSize(), sortBy, keyword);
 
-        // 使用PageHelper进行物理分页
+        // 使用 PageHelper 进行物理分页
         PageHelper.startPage(dto.getPage(), dto.getPageSize());
 
         List<Topic> topicList;
         // 根据排序方式选择不同的查询方法
         if ("hot".equals(sortBy)) {
-            topicList = topicMapper.selectHotTopicsByBoard(null, null, keyword);
+            topicList = topicMapper.selectHotTopicsByBoard(null, keyword);
         } else {
             // 默认按最新排序
-            topicList = topicMapper.selectLatestTopicsByBoard(null, null, keyword);
+            topicList = topicMapper.selectLatestTopicsByBoard(null, keyword);
         }
 
         PageInfo<Topic> pageInfo = new PageInfo<>(topicList);
@@ -91,37 +99,21 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     @Override
-    public PageResult<TopicVO> getTopicsByBoard(String boardLevel1, String boardLevel2, PageQueryDTO dto, String sortBy, String keyword) {
-        log.info("根据板块查询话题，一级板块：{}，二级板块：{}，排序方式：{}，关键词：{}", boardLevel1, boardLevel2, sortBy, keyword);
+    public PageResult<TopicVO> getTopicsByBoard(String boardSub, PageQueryDTO dto, String sortBy, String keyword) {
+        log.info("根据话题板块大类查询话题，话题板块子类：{}，排序方式：{}，关键词：{}", boardSub, sortBy, keyword);
 
-        // 使用PageHelper进行物理分页
+        // 使用 PageHelper 进行物理分页
         PageHelper.startPage(dto.getPage(), dto.getPageSize());
 
         List<Topic> topicList;
         // 根据排序方式选择不同的查询方法
         if ("hot".equals(sortBy)) {
-            topicList = topicMapper.selectHotTopicsByBoard(boardLevel1, boardLevel2, keyword);
+            topicList = topicMapper.selectHotTopicsByBoard(boardSub, keyword);
         } else {
             // 默认按最新排序
-            topicList = topicMapper.selectLatestTopicsByBoard(boardLevel1, boardLevel2, keyword);
+            topicList = topicMapper.selectLatestTopicsByBoard(boardSub, keyword);
         }
 
-        PageInfo<Topic> pageInfo = new PageInfo<>(topicList);
-
-        List<TopicVO> voList = topicList.stream()
-                .map(this::convertToTopicVO)
-                .collect(Collectors.toList());
-
-        return new PageResult<>(pageInfo.getTotal(), dto.getPage(), dto.getPageSize(), voList);
-    }
-
-    @Override
-    public PageResult<TopicVO> getTopicsByDisease(String diseaseCode, PageQueryDTO dto) {
-        log.info("根据疾病查询话题，疾病编码：{}", diseaseCode);
-
-        // 使用PageHelper进行物理分页
-        PageHelper.startPage(dto.getPage(), dto.getPageSize());
-        List<Topic> topicList = topicMapper.selectByDiseaseCode(diseaseCode);
         PageInfo<Topic> pageInfo = new PageInfo<>(topicList);
 
         List<TopicVO> voList = topicList.stream()
@@ -133,7 +125,7 @@ public class CommunityServiceImpl implements CommunityService {
 
     @Override
     public TopicDetailVO getTopicDetail(Long topicId, Long userId) {
-        log.info("查询话题详情，话题ID：{}", topicId);
+        log.info("查询话题详情，话题 ID：{}", topicId);
 
         Topic topic = topicMapper.selectById(topicId);
         if (topic == null) {
@@ -162,11 +154,11 @@ public class CommunityServiceImpl implements CommunityService {
                 .collect(Collectors.toList());
         detailVO.setComments(commentVOList);
 
-        // 如果传入了用户ID，检查是否点赞/收藏
+        // 如果传入了用户 ID，检查是否点赞/收藏
         if (userId != null) {
             boolean isLiked = likeMapper.countByUserAndTarget(userId, 1, topicId) > 0;
             detailVO.setIsLiked(isLiked);
-            // 收藏状态需要查询Collection表，这里暂时省略
+            // 收藏状态需要查询 Collection 表，这里暂时省略
         }
 
         return detailVO;
@@ -175,7 +167,7 @@ public class CommunityServiceImpl implements CommunityService {
     @Override
     @Transactional
     public Long publishTopic(Long userId, TopicPublishDTO dto) {
-        log.info("发布话题，用户ID：{}", userId);
+        log.info("发布话题，用户 ID：{}", userId);
 
         Topic topic = new Topic();
         BeanUtils.copyProperties(dto, topic);
@@ -184,21 +176,20 @@ public class CommunityServiceImpl implements CommunityService {
         topic.setCommentCount(0);
         topic.setCollectCount(0);
         topic.setViewCount(0);
-        topic.setStatus(1); // 正常状态
         topic.setIsDeleted(0);
         topic.setCreateTime(LocalDateTime.now());
         topic.setUpdateTime(LocalDateTime.now());
 
         topicMapper.insert(topic);
 
-        log.info("话题发布成功，话题ID：{}", topic.getId());
+        log.info("话题发布成功，话题 ID：{}", topic.getId());
         return topic.getId();
     }
 
     @Override
     @Transactional
     public void updateTopic(Long userId, Long topicId, TopicUpdateDTO dto) {
-        log.info("修改话题，用户ID：{}，话题ID：{}", userId, topicId);
+        log.info("修改话题，用户 ID：{}，话题 ID：{}", userId, topicId);
 
         Topic topic = topicMapper.selectById(topicId);
         if (topic == null) {
@@ -218,23 +209,20 @@ public class CommunityServiceImpl implements CommunityService {
         if (dto.getBoardType() != null) {
             topic.setBoardType(dto.getBoardType());
         }
-        if (dto.getBoardLevel1() != null) {
-            topic.setBoardLevel1(dto.getBoardLevel1());
-        }
-        if (dto.getBoardLevel2() != null) {
-            topic.setBoardLevel2(dto.getBoardLevel2());
+        if (dto.getBoardSub() != null) {
+            topic.setBoardSub(dto.getBoardSub());
         }
         topic.setUpdateTime(LocalDateTime.now());
 
         topicMapper.updateById(topic);
 
-        log.info("话题修改成功，话题ID：{}", topicId);
+        log.info("话题修改成功，话题 ID：{}", topicId);
     }
 
     @Override
     @Transactional
     public void deleteTopic(Long userId, Long topicId) {
-        log.info("删除话题，用户ID：{}，话题ID：{}", userId, topicId);
+        log.info("删除话题，用户 ID：{}，话题 ID：{}", userId, topicId);
 
         Topic topic = topicMapper.selectById(topicId);
         if (topic == null) {
@@ -249,16 +237,35 @@ public class CommunityServiceImpl implements CommunityService {
             }
         }
 
+        // 级联删除：先删除该话题的所有评论的点赞
+        List<Comment> comments = commentMapper.selectByTopicId(topicId);
+        for (Comment comment : comments) {
+            likeMapper.deleteByCommentId(comment.getId());
+        }
+
+        // 级联删除：删除该话题的所有评论
+        commentMapper.deleteByTopicId(topicId);
+
+        // 级联删除：删除该话题的所有点赞
+        likeMapper.deleteByTopicId(topicId);
+
+        // 级联删除：删除该话题的所有收藏
+        collectionMapper.deleteByTopicId(topicId);
+
+        // 级联删除：删除该话题的所有举报
+        reportMapper.deleteByTopicId(topicId);
+
+        // 删除话题
         topicMapper.deleteById(topicId);
 
-        log.info("话题删除成功，话题ID：{}，操作者：{}", topicId, userId);
+        log.info("话题删除成功，话题 ID：{}，操作者：{}，级联删除评论{}条", topicId, userId, comments.size());
     }
 
     @Override
     public PageResult<CommentVO> getCommentList(Long topicId, PageQueryDTO dto) {
-        log.info("查询评论列表，话题ID：{}", topicId);
+        log.info("查询评论列表，话题 ID：{}", topicId);
 
-        // 使用PageHelper进行物理分页
+        // 使用 PageHelper 进行物理分页
         PageHelper.startPage(dto.getPage(), dto.getPageSize());
         List<Comment> commentList = commentMapper.selectByTopicId(topicId);
         PageInfo<Comment> pageInfo = new PageInfo<>(commentList);
@@ -273,7 +280,7 @@ public class CommunityServiceImpl implements CommunityService {
     @Override
     @Transactional
     public Long addComment(Long userId, CommentDTO dto) {
-        log.info("发表评论，用户ID：{}，话题ID：{}", userId, dto.getTopicId());
+        log.info("发表评论，用户 ID：{}，话题 ID：{}", userId, dto.getTopicId());
 
         // 获取评论者信息
         User commenter = userMapper.selectById(userId);
@@ -289,7 +296,7 @@ public class CommunityServiceImpl implements CommunityService {
 
         commentMapper.insert(comment);
 
-        // 更新话题的评论数
+        // 更新话题的评论数（包括回复评论）
         topicMapper.incrementCommentCount(dto.getTopicId());
 
         // 创建通知
@@ -307,14 +314,14 @@ public class CommunityServiceImpl implements CommunityService {
             }
         }
 
-        log.info("评论发表成功，评论ID：{}", comment.getId());
+        log.info("评论发表成功，评论 ID：{}", comment.getId());
         return comment.getId();
     }
 
     @Override
     @Transactional
     public void deleteComment(Long userId, Long commentId) {
-        log.info("删除评论，用户ID：{}，评论ID：{}", userId, commentId);
+        log.info("删除评论，用户 ID：{}，评论 ID：{}", userId, commentId);
 
         Comment comment = commentMapper.selectById(commentId);
         if (comment == null) {
@@ -329,24 +336,46 @@ public class CommunityServiceImpl implements CommunityService {
             }
         }
 
+        // 级联删除：删除该评论的所有回复
+        if (comment.getParentId() == 0 || comment.getParentId() == null) {
+            // 如果是一级评论，删除其所有回复
+            List<Comment> replies = commentMapper.selectByParentId(commentId);
+            for (Comment reply : replies) {
+                // 删除回复的点赞和举报
+                likeMapper.deleteByCommentId(reply.getId());
+                reportMapper.deleteByCommentId(reply.getId());
+                // 删除回复评论
+                commentMapper.deleteById(reply.getId());
+                // 减少话题评论数（每个回复减 1）
+                topicMapper.decrementCommentCount(comment.getTopicId());
+            }
+        }
+
+        // 级联删除：删除该评论的所有点赞
+        likeMapper.deleteByCommentId(commentId);
+
+        // 级联删除：删除该评论的所有举报
+        reportMapper.deleteByCommentId(commentId);
+
+        // 删除评论
         commentMapper.deleteById(commentId);
 
         // 更新话题的评论数
         topicMapper.decrementCommentCount(comment.getTopicId());
 
-        log.info("评论删除成功，评论ID：{}，操作者：{}", commentId, userId);
+        log.info("评论删除成功，评论 ID：{}，操作者：{}", commentId, userId);
     }
 
     @Override
     @Transactional
     public void likeTopic(Long userId, Long topicId) {
-        log.info("点赞话题，用户ID：{}，话题ID：{}", userId, topicId);
+        log.info("点赞话题，用户 ID：{}，话题 ID：{}", userId, topicId);
 
         // 先尝试恢复已删除的点赞记录
         int reliked = likeMapper.relike(userId, 1, topicId);
 
         if (reliked > 0) {
-            log.info("恢复点赞记录成功，话题ID：{}", topicId);
+            log.info("恢复点赞记录成功，话题 ID：{}", topicId);
         } else {
             // 检查是否已点赞
             int count = likeMapper.countByUserAndTarget(userId, 1, topicId);
@@ -362,7 +391,7 @@ public class CommunityServiceImpl implements CommunityService {
             like.setIsDeleted(0);
             like.setCreateTime(LocalDateTime.now());
             likeMapper.insert(like);
-            log.info("新建点赞记录成功，话题ID：{}", topicId);
+            log.info("新建点赞记录成功，话题 ID：{}", topicId);
         }
 
         // 更新话题的点赞数
@@ -375,32 +404,32 @@ public class CommunityServiceImpl implements CommunityService {
             notificationService.createLikeNotification(topicId, topic.getUserId(), liker.getNickname(), 1);
         }
 
-        log.info("点赞成功，话题ID：{}", topicId);
+        log.info("点赞成功，话题 ID：{}", topicId);
     }
 
     @Override
     @Transactional
     public void unlikeTopic(Long userId, Long topicId) {
-        log.info("取消点赞话题，用户ID：{}，话题ID：{}", userId, topicId);
+        log.info("取消点赞话题，用户 ID：{}，话题 ID：{}", userId, topicId);
 
         likeMapper.cancelLike(userId, 1, topicId);
 
         // 更新话题的点赞数
         topicMapper.decrementLikeCount(topicId);
 
-        log.info("取消点赞成功，话题ID：{}", topicId);
+        log.info("取消点赞成功，话题 ID：{}", topicId);
     }
 
     @Override
     @Transactional
     public void likeComment(Long userId, Long commentId) {
-        log.info("点赞评论，用户ID：{}，评论ID：{}", userId, commentId);
+        log.info("点赞评论，用户 ID：{}，评论 ID：{}", userId, commentId);
 
         // 先尝试恢复已删除的点赞记录
         int reliked = likeMapper.relike(userId, 2, commentId);
 
         if (reliked > 0) {
-            log.info("恢复点赞记录成功，评论ID：{}", commentId);
+            log.info("恢复点赞记录成功，评论 ID：{}", commentId);
         } else {
             // 检查是否已点赞
             int count = likeMapper.countByUserAndTarget(userId, 2, commentId);
@@ -416,7 +445,7 @@ public class CommunityServiceImpl implements CommunityService {
             like.setIsDeleted(0);
             like.setCreateTime(LocalDateTime.now());
             likeMapper.insert(like);
-            log.info("新建点赞记录成功，评论ID：{}", commentId);
+            log.info("新建点赞记录成功，评论 ID：{}", commentId);
         }
 
         commentMapper.incrementLikeCount(commentId);
@@ -428,26 +457,26 @@ public class CommunityServiceImpl implements CommunityService {
             notificationService.createLikeNotification(commentId, comment.getUserId(), liker.getNickname(), 2);
         }
 
-        log.info("点赞成功，评论ID：{}", commentId);
+        log.info("点赞成功，评论 ID：{}", commentId);
     }
 
     @Override
     @Transactional
     public void unlikeComment(Long userId, Long commentId) {
-        log.info("取消点赞评论，用户ID：{}，评论ID：{}", userId, commentId);
+        log.info("取消点赞评论，用户 ID：{}，评论 ID：{}", userId, commentId);
 
         likeMapper.cancelLike(userId, 2, commentId);
 
         commentMapper.decrementLikeCount(commentId);
 
-        log.info("取消点赞成功，评论ID：{}", commentId);
+        log.info("取消点赞成功，评论 ID：{}", commentId);
     }
 
     @Override
     public PageResult<TopicVO> getMyTopics(Long userId, PageQueryDTO dto) {
-        log.info("查询我的话题，用户ID：{}", userId);
+        log.info("查询我的话题，用户 ID：{}", userId);
 
-        // 使用PageHelper进行物理分页
+        // 使用 PageHelper 进行物理分页
         PageHelper.startPage(dto.getPage(), dto.getPageSize());
         List<Topic> topicList = topicMapper.selectByUserId(userId);
         PageInfo<Topic> pageInfo = new PageInfo<>(topicList);
@@ -461,9 +490,9 @@ public class CommunityServiceImpl implements CommunityService {
 
     @Override
     public PageResult<CommentVO> getMyComments(Long userId, PageQueryDTO dto) {
-        log.info("查询我的评论，用户ID：{}", userId);
+        log.info("查询我的评论，用户 ID：{}", userId);
 
-        // 使用PageHelper进行物理分页
+        // 使用 PageHelper 进行物理分页
         PageHelper.startPage(dto.getPage(), dto.getPageSize());
         List<Comment> commentList = commentMapper.selectByUserId(userId);
         PageInfo<Comment> pageInfo = new PageInfo<>(commentList);
@@ -475,30 +504,8 @@ public class CommunityServiceImpl implements CommunityService {
         return new PageResult<>(pageInfo.getTotal(), dto.getPage(), dto.getPageSize(), voList);
     }
 
-    @Override
-    @Transactional
-    public void incrementViewCount(Long topicId) {
-        topicMapper.incrementViewCount(topicId);
-    }
-
-    @Override
-    public PageResult<TopicVO> getHotTopics(PageQueryDTO dto) {
-        log.info("查询热门话题");
-
-        // 使用PageHelper进行物理分页
-        PageHelper.startPage(dto.getPage(), dto.getPageSize());
-        List<Topic> topicList = topicMapper.selectHotTopics(100);
-        PageInfo<Topic> pageInfo = new PageInfo<>(topicList);
-
-        List<TopicVO> voList = topicList.stream()
-                .map(this::convertToTopicVO)
-                .collect(Collectors.toList());
-
-        return new PageResult<>(pageInfo.getTotal(), dto.getPage(), dto.getPageSize(), voList);
-    }
-
     /**
-     * 转换为话题VO
+     * 转换为话题 VO
      */
     private TopicVO convertToTopicVO(Topic topic) {
         TopicVO vo = new TopicVO();
@@ -523,13 +530,13 @@ public class CommunityServiceImpl implements CommunityService {
     }
 
     /**
-     * 转换为评论VO
+     * 转换为评论 VO
      */
     private CommentVO convertToCommentVO(Comment comment) {
         CommentVO vo = new CommentVO();
         BeanUtils.copyProperties(comment, vo);
 
-        // 优先使用Comment中已经加载的用户信息（避免N+1查询）
+        // 优先使用 Comment 中已经加载的用户信息（避免 N+1 查询）
         if (comment.getUserNickname() != null) {
             vo.setNickname(comment.getUserNickname());
             vo.setAvatar(comment.getUserAvatar());
@@ -559,29 +566,7 @@ public class CommunityServiceImpl implements CommunityService {
         return vo;
     }
 
-    // ==================== 管理员审核功能实现 ====================
-
-    @Override
-    @Transactional
-    public void moderateTopic(Long adminUserId, Long topicId, Integer status, String reason) {
-        // 验证管理员权限
-        if (!roleService.isAdmin(adminUserId)) {
-            throw new BusinessException("无权限执行此操作");
-        }
-
-        Topic topic = topicMapper.selectById(topicId);
-        if (topic == null) {
-            throw new BusinessException("话题不存在");
-        }
-
-        // 更新话题状态
-        topic.setStatus(status);
-        topic.setUpdateTime(LocalDateTime.now());
-        topicMapper.updateById(topic);
-
-        // TODO: 可选 - 记录审核日志到审核历史表
-        log.info("管理员审核话题，话题ID：{}，状态：{}，理由：{}，操作者：{}", topicId, status, reason, adminUserId);
-    }
+    // ==================== 管理员管理话题功能实现 ====================
 
     @Override
     @Transactional
@@ -596,8 +581,27 @@ public class CommunityServiceImpl implements CommunityService {
             throw new BusinessException("话题不存在");
         }
 
+        // 级联删除：先删除该话题的所有评论的点赞
+        List<Comment> comments = commentMapper.selectByTopicId(topicId);
+        for (Comment comment : comments) {
+            likeMapper.deleteByCommentId(comment.getId());
+        }
+
+        // 级联删除：删除该话题的所有评论
+        commentMapper.deleteByTopicId(topicId);
+
+        // 级联删除：删除该话题的所有点赞
+        likeMapper.deleteByTopicId(topicId);
+
+        // 级联删除：删除该话题的所有收藏
+        collectionMapper.deleteByTopicId(topicId);
+
+        // 级联删除：删除该话题的所有举报
+        reportMapper.deleteByTopicId(topicId);
+
+        // 删除话题
         topicMapper.deleteById(topicId);
-        log.info("管理员删除话题，话题ID：{}，理由：{}，操作者：{}", topicId, reason, adminUserId);
+        log.info("管理员删除话题，话题 ID：{}，理由：{}，操作者：{}，级联删除评论{}条", topicId, reason, adminUserId, comments.size());
     }
 
     @Override
@@ -613,40 +617,30 @@ public class CommunityServiceImpl implements CommunityService {
             throw new BusinessException("评论不存在");
         }
 
+        // 级联删除：删除该评论的所有回复
+        if (comment.getParentId() == 0 || comment.getParentId() == null) {
+            // 如果是一级评论，删除其所有回复
+            List<Comment> replies = commentMapper.selectByParentId(commentId);
+            for (Comment reply : replies) {
+                // 删除回复的点赞和举报
+                likeMapper.deleteByCommentId(reply.getId());
+                reportMapper.deleteByCommentId(reply.getId());
+                // 删除回复评论
+                commentMapper.deleteById(reply.getId());
+                // 减少话题评论数（每个回复减 1）
+                topicMapper.decrementCommentCount(comment.getTopicId());
+            }
+        }
+
+        // 级联删除：删除该评论的所有点赞
+        likeMapper.deleteByCommentId(commentId);
+
+        // 级联删除：删除该评论的所有举报
+        reportMapper.deleteByCommentId(commentId);
+
+        // 删除评论
         commentMapper.deleteById(commentId);
         topicMapper.decrementCommentCount(comment.getTopicId());
-        log.info("管理员删除评论，评论ID：{}，理由：{}，操作者：{}", commentId, reason, adminUserId);
-    }
-
-    @Override
-    public PageResult<TopicVO> getPendingTopics(PageQueryDTO dto) {
-        log.info("查询待审核话题列表");
-
-        // 使用PageHelper进行物理分页
-        PageHelper.startPage(dto.getPage(), dto.getPageSize());
-        List<Topic> topicList = topicMapper.selectByStatus(2); // 2=审核中
-        PageInfo<Topic> pageInfo = new PageInfo<>(topicList);
-
-        List<TopicVO> voList = topicList.stream()
-                .map(this::convertToTopicVO)
-                .collect(Collectors.toList());
-
-        return new PageResult<>(pageInfo.getTotal(), dto.getPage(), dto.getPageSize(), voList);
-    }
-
-    @Override
-    public PageResult<TopicVO> getAllTopics(PageQueryDTO dto) {
-        log.info("查询所有话题（管理视角）");
-
-        // 使用PageHelper进行物理分页
-        PageHelper.startPage(dto.getPage(), dto.getPageSize());
-        List<Topic> topicList = topicMapper.selectAll(); // 包含所有状态
-        PageInfo<Topic> pageInfo = new PageInfo<>(topicList);
-
-        List<TopicVO> voList = topicList.stream()
-                .map(this::convertToTopicVO)
-                .collect(Collectors.toList());
-
-        return new PageResult<>(pageInfo.getTotal(), dto.getPage(), dto.getPageSize(), voList);
+        log.info("管理员删除评论，评论 ID：{}，理由：{}，操作者：{}", commentId, reason, adminUserId);
     }
 }

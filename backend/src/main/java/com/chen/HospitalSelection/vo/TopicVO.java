@@ -16,12 +16,12 @@ import java.time.LocalDateTime;
 public class TopicVO {
 
     /**
-     * 话题ID
+     * 话题 ID
      */
     private Long id;
 
     /**
-     * 发布用户ID
+     * 发布用户 ID
      */
     private Long userId;
 
@@ -46,14 +46,9 @@ public class TopicVO {
     private String diseaseName;
 
     /**
-     * 一级板块（心血管区、内分泌区、肿瘤区、儿科区等）
+     * 子板块（心血管、内分泌、肿瘤、儿科等）
      */
-    private String boardLevel1;
-
-    /**
-     * 二级板块（具体疾病，如高血压、冠心病、糖尿病等）
-     */
-    private String boardLevel2;
+    private String boardSub;
 
     /**
      * 板块类型（1 = 疾病板块，2 = 医院评价区，3 = 就医经验区，4 = 康复护理区）
@@ -66,7 +61,7 @@ public class TopicVO {
     private String title;
 
     /**
-     * 话题内容摘要（100字以内）
+     * 话题内容摘要（100 字以内）
      */
     private String contentSummary;
 

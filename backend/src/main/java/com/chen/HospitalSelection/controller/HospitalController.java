@@ -149,21 +149,6 @@ public class HospitalController {
     }
 
     /**
-     * 医院搜索建议
-     * 接口路径：GET /api/hospital/search/suggest
-     * 是否需要登录：否
-     *
-     * @param keyword 搜索关键词
-     * @return 搜索建议列表（医院名称）
-     */
-    @GetMapping("/search/suggest")
-    @ApiOperation("医院搜索建议")
-    public Result<List<String>> searchSuggest(@RequestParam String keyword) {
-        List<String> suggestions = hospitalService.getSearchSuggestions(keyword);
-        return Result.success(suggestions);
-    }
-
-    /**
      * AI智能推荐医院
      * 接口路径：POST /api/hospital/ai-recommend
      * 是否需要登录：否
@@ -179,7 +164,12 @@ public class HospitalController {
         try {
             PageResult<HospitalSimpleVO> result = hospitalService.aiRecommendHospitals(request);
             return Result.success(result, "AI推荐成功");
+        } catch (IllegalArgumentException e) {
+            // 用户输入无效或AI无法理解
+            log.warn("AI推荐参数错误：{}", e.getMessage());
+            return Result.error(400, e.getMessage());
         } catch (Exception e) {
+            // 系统异常
             log.error("AI推荐失败", e);
             return Result.error(500, "AI推荐失败：" + e.getMessage());
         }

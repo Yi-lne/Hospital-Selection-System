@@ -18,88 +18,11 @@
         id, user_id, target_type, target_id, is_deleted, create_time
     </sql>
 
-    <!-- 根据ID查询 -->
-    <select id="selectById" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM community_like
-        WHERE id = #{id}
-    </select>
-
-    <!-- 查询用户是否点赞某目标 -->
-    <select id="selectByUserAndTarget" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM community_like
-        WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId} AND is_deleted = 0
-    </select>
-
-    <!-- 检查是否已点赞 -->
-    <select id="exists" resultType="java.lang.Boolean">
-        SELECT COUNT(*) > 0
-        FROM community_like
-        WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId} AND is_deleted = 0
-    </select>
-
-    <!-- 根据用户ID查询点赞记录 -->
-    <select id="selectByUserId" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM community_like
-        WHERE user_id = #{userId} AND is_deleted = 0
-        ORDER BY create_time DESC
-    </select>
-
-    <!-- 根据目标查询点赞列表 -->
-    <select id="selectByTarget" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM community_like
-        WHERE target_type = #{targetType} AND target_id = #{targetId} AND is_deleted = 0
-        ORDER BY create_time DESC
-    </select>
-
-    <!-- 统计目标的点赞数 -->
-    <select id="countByTarget" resultType="java.lang.Integer">
-        SELECT COUNT(*)
-        FROM community_like
-        WHERE target_type = #{targetType} AND target_id = #{targetId} AND is_deleted = 0
-    </select>
-
     <!-- 统计用户对某个目标的点赞记录数 -->
     <select id="countByUserAndTarget" resultType="java.lang.Integer">
         SELECT COUNT(*)
         FROM community_like
         WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId} AND is_deleted = 0
-    </select>
-
-    <!-- 统计话题的点赞数 -->
-    <select id="countByTopicId" resultType="java.lang.Integer">
-        SELECT COUNT(*)
-        FROM community_like
-        WHERE target_type = 1 AND target_id = #{topicId} AND is_deleted = 0
-    </select>
-
-    <!-- 统计评论的点赞数 -->
-    <select id="countByCommentId" resultType="java.lang.Integer">
-        SELECT COUNT(*)
-        FROM community_like
-        WHERE target_type = 2 AND target_id = #{commentId} AND is_deleted = 0
-    </select>
-
-    <!-- 统计用户的点赞数 -->
-    <select id="countByUserId" resultType="java.lang.Integer">
-        SELECT COUNT(*)
-        FROM community_like
-        WHERE user_id = #{userId} AND is_deleted = 0
-    </select>
-
-    <!-- 批量查询点赞状态 -->
-    <select id="batchCheckLikes" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
-        FROM community_like
-        WHERE user_id = #{userId} AND target_type = #{targetType}
-        AND target_id IN
-        <foreach collection="targetIds" item="targetId" open="(" separator="," close=")">
-            #{targetId}
-        </foreach>
-        AND is_deleted = 0
     </select>
 
     <!-- 插入点赞记录 -->
@@ -122,32 +45,28 @@
         WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId}
     </update>
 
-    <!-- 切换点赞状态 -->
-    <update id="toggleLike">
-        UPDATE community_like
-        SET is_deleted = ABS(is_deleted - 1)
-        WHERE user_id = #{userId} AND target_type = #{targetType} AND target_id = #{targetId}
-    </update>
-
     <!-- 删除点赞记录 -->
     <delete id="deleteById">
         DELETE FROM community_like
         WHERE id = #{id}
     </delete>
 
-    <!-- 批量逻辑删除 -->
-    <delete id="batchDelete">
-        DELETE FROM community_like
-        WHERE id IN
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-    </delete>
-
     <!-- 删除目标的所有点赞记录 -->
     <delete id="deleteByTarget">
         DELETE FROM community_like
         WHERE target_type = #{targetType} AND target_id = #{targetId}
+    </delete>
+
+    <!-- 删除话题的所有点赞记录（级联删除用） -->
+    <delete id="deleteByTopicId">
+        DELETE FROM community_like
+        WHERE target_type = 1 AND target_id = #{topicId}
+    </delete>
+
+    <!-- 删除评论的所有点赞记录（级联删除用） -->
+    <delete id="deleteByCommentId">
+        DELETE FROM community_like
+        WHERE target_type = 2 AND target_id = #{commentId}
     </delete>
 
 </mapper>

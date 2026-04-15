@@ -42,4 +42,18 @@ public interface ReportMapper {
      * 删除举报记录
      */
     int deleteById(Long id);
+
+    /**
+     * 删除话题的所有举报记录（级联删除用）
+     * @param topicId 话题ID
+     * @return 影响行数
+     */
+    int deleteByTopicId(@Param("topicId") Long topicId);
+
+    /**
+     * 删除评论的所有举报记录（级联删除用）
+     * @param commentId 评论ID
+     * @return 影响行数
+     */
+    int deleteByCommentId(@Param("commentId") Long commentId);
 }

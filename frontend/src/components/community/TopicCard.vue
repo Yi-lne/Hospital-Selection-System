@@ -6,7 +6,7 @@
         <span class="author-name">{{ topic.nickname || '匿名用户' }}</span>
         <span class="publish-time">{{ formatTime(topic.createTime) }}</span>
       </div>
-      <!-- 板块类型 -->
+      <!-- 话题板块大类 -->
       <el-tag v-if="boardTypeName" size="small" type="primary" class="board-type-tag">
         {{ boardTypeName }}
       </el-tag>
@@ -29,12 +29,12 @@
         <!-- 非疾病板块时才在内容中显示疾病标签 -->
         <el-tag v-if="topic.boardType !== 1 && topic.diseaseName" size="small" type="info">{{ topic.diseaseName }}</el-tag>
       </div>
-      <!-- 疾病板块时显示疾病类型，其他情况显示一级板块 -->
+      <!-- 疾病板块时显示疾病类型，其他情况显示话题板块子类 -->
       <div v-if="topic.boardType === 1 && topic.diseaseName" class="board-level1 disease-tag">
         {{ topic.diseaseName }}
       </div>
-      <div v-else-if="topic.boardLevel1" class="board-level1">
-        {{ topic.boardLevel1 }}
+      <div v-else-if="topic.boardSub" class="board-sub">
+        {{ topic.boardSub }}
       </div>
     </div>
 
@@ -81,7 +81,7 @@ const COLLECTION_TYPE = {
   TOPIC: 3
 }
 
-// 板块类型映射
+// 话题板块大类映射
 const boardTypeMap = {
   1: '疾病板块',
   2: '医院评价',
@@ -89,7 +89,7 @@ const boardTypeMap = {
   4: '康复护理'
 }
 
-// 板块类型名称
+// 话题板块大类名称
 const boardTypeName = computed(() => {
   if (!props.topic.boardType) return ''
   return boardTypeMap[props.topic.boardType] || ''
@@ -143,6 +143,9 @@ const toggleCollect = async () => {
         targetId: props.topic.id
       })
       ElMessage.success('取消收藏成功')
+      // 更新收藏数和状态
+      props.topic.collectCount = (props.topic.collectCount || 0) - 1
+      isCollected.value = false
       emit('collection-change')
     } else {
       await addCollection({
@@ -150,6 +153,8 @@ const toggleCollect = async () => {
         targetId: props.topic.id
       })
       ElMessage.success('收藏成功')
+      // 更新收藏数和状态
+      props.topic.collectCount = (props.topic.collectCount || 0) + 1
       isCollected.value = true
     }
   } catch (error) {
@@ -235,7 +240,7 @@ onMounted(() => {
     }
   }
 
-  .board-level1 {
+  .board-sub {
     flex-shrink: 0;
     padding: 4px 12px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

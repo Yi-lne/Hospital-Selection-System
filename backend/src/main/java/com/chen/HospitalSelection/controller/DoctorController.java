@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
 
 /**
  * 医生信息接口
@@ -63,36 +62,6 @@ public class DoctorController {
     }
 
     /**
-     * 医生筛选
-     * 接口路径：POST /api/doctor/filter
-     * 是否需要登录：否
-     *
-     * @param dto 筛选条件（医院、科室、职称等）
-     * @return 筛选后的医生列表
-     */
-    @PostMapping("/filter")
-    @ApiOperation("医生筛选")
-    public Result<PageResult<DoctorSimpleVO>> filterDoctors(@RequestBody @Valid DoctorFilterDTO dto) {
-        PageResult<DoctorSimpleVO> pageResult = doctorService.filterDoctors(dto);
-        return Result.success(pageResult);
-    }
-
-    /**
-     * 按科室查询医生
-     * 接口路径：GET /api/doctor/department/{deptId}
-     * 是否需要登录：否
-     *
-     * @param deptId 科室ID
-     * @return 该科室下的所有医生
-     */
-    @GetMapping("/department/{deptId}")
-    @ApiOperation("按科室查询医生")
-    public Result<List<DoctorSimpleVO>> getDoctorsByDepartment(@PathVariable Long deptId) {
-        List<DoctorSimpleVO> doctors = doctorService.getDoctorsByDepartment(deptId);
-        return Result.success(doctors);
-    }
-
-    /**
      * 按医院查询医生
      * 接口路径：GET /api/doctor/hospital/{hospitalId}
      * 是否需要登录：否
@@ -109,6 +78,21 @@ public class DoctorController {
         PageResult<DoctorSimpleVO> pageResult = doctorService.getDoctorsByHospital(hospitalId, dto);
         return Result.success(pageResult);
     }
+
+    /**
+     * 多条件筛选医生
+     * 接口路径：POST /api/doctor/filter
+     * 是否需要登录：否
+     *
+     * @param dto 筛选条件（医院 ID、科室 ID、职称等）
+     * @return 筛选后的医生列表（分页）
+     */
+     @PostMapping("/filter")
+     @ApiOperation("多条件筛选医生")
+     public Result<PageResult<DoctorSimpleVO>> filterDoctors(@Valid @RequestBody DoctorFilterDTO dto) {
+            PageResult<DoctorSimpleVO> pageResult = doctorService.filterDoctors(dto);
+            return Result.success(pageResult);
+     }
 
     /**
      * 医生详情

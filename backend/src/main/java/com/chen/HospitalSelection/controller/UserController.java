@@ -1,13 +1,11 @@
 package com.chen.HospitalSelection.controller;
 
-import com.chen.HospitalSelection.dto.PasswordResetDTO;
 import com.chen.HospitalSelection.dto.PasswordUpdateDTO;
 import com.chen.HospitalSelection.dto.UserLoginDTO;
 import com.chen.HospitalSelection.dto.UserRegisterDTO;
 import com.chen.HospitalSelection.dto.UserUpdateDTO;
 import com.chen.HospitalSelection.service.UserService;
 import com.chen.HospitalSelection.util.FileUploadUtil;
-import com.chen.HospitalSelection.util.JwtUtil;
 import com.chen.HospitalSelection.vo.Result;
 import com.chen.HospitalSelection.vo.UserProfileVO;
 import com.chen.HospitalSelection.vo.UserVO;
@@ -155,21 +153,6 @@ public class UserController {
         Long userId = getCurrentUserId(request);
         userService.updatePassword(userId, dto);
         return Result.success(null, "密码修改成功");
-    }
-
-    /**
-     * 找回密码
-     * 接口路径：POST /api/user/password/reset
-     * 是否需要登录：否
-     *
-     * @param dto 找回密码信息（手机号+验证码+新密码）
-     * @return 重置结果
-     */
-    @PostMapping("/password/reset")
-    @ApiOperation("找回密码")
-    public Result<Void> resetPassword(@RequestBody @Valid PasswordResetDTO dto) {
-        userService.resetPassword(dto);
-        return Result.success(null, "密码重置成功");
     }
 
     /**

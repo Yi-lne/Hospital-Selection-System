@@ -27,14 +27,6 @@ public interface CaptchaService {
     boolean verifyCaptcha(CaptchaVerifyDTO dto);
 
     /**
-     * 验证并消耗验证码（验证成功后删除，防止重复使用）
-     *
-     * @param dto 验证信息
-     * @return 是否验证成功
-     */
-    boolean verifyAndConsumeCaptcha(CaptchaVerifyDTO dto);
-
-    /**
      * 删除验证码
      *
      * @param captchaId 验证码ID

@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * @author chen
  * @since 2025-01-30
  */
-@Slf4j
+
 @Service
 public class DepartmentServiceImpl implements DepartmentService {
 
@@ -76,41 +76,6 @@ public class DepartmentServiceImpl implements DepartmentService {
 
         return departmentList.stream()
                 .map(this::convertToVO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public DepartmentVO getDepartmentDetail(Long deptId) {
-        log.info("查询科室详情，科室ID：{}", deptId);
-
-        Department department = departmentMapper.selectById(deptId);
-        if (department == null) {
-            throw ResourceNotFoundException.departmentNotFound();
-        }
-
-        return convertToVO(department);
-    }
-
-    @Override
-    public List<DepartmentVO> searchDepartmentsByName(String deptName) {
-        log.info("搜索科室，科室名称：{}", deptName);
-
-        List<Department> departmentList = departmentMapper.searchByName(deptName);
-
-        return departmentList.stream()
-                .map(this::convertToVO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<String> getAllDepartmentTypes() {
-        log.info("获取所有科室类型");
-
-        List<Department> allDepartments = departmentMapper.selectByHospitalId(1L);
-
-        return allDepartments.stream()
-                .map(Department::getDeptName)
-                .distinct()
                 .collect(Collectors.toList());
     }
 

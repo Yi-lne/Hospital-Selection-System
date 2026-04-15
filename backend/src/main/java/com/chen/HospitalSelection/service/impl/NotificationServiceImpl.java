@@ -138,67 +138,6 @@ public class NotificationServiceImpl implements NotificationService {
         log.info("========================================");
     }
 
-    @Override
-    public void createTopicDeleteNotification(Long topicId, Long topicAuthorId, String reason) {
-        log.info("创建话题删除通知，话题ID：{}，话题作者ID：{}", topicId, topicAuthorId);
-
-        // 获取话题标题
-        Topic topic = topicMapper.selectById(topicId);
-        String topicTitle = topic != null ? topic.getTitle() : "该话题";
-        String content = "你发布的话题「" + topicTitle + "」已被管理员删除";
-        if (reason != null && !reason.isEmpty()) {
-            content += "，原因：" + reason;
-        }
-
-        Notification notification = new Notification();
-        notification.setUserId(topicAuthorId);
-        notification.setType("delete_topic");
-        notification.setRelatedId(topicId);
-        notification.setContent(content);
-        notification.setIsRead(0);
-        notification.setCreateTime(LocalDateTime.now());
-
-        notificationMapper.insert(notification);
-        log.info("话题删除通知创建成功");
-    }
-
-    @Override
-    public void createCommentDeleteNotification(Long commentId, Long commentAuthorId, String reason) {
-        log.info("创建评论删除通知，评论ID：{}，评论作者ID：{}", commentId, commentAuthorId);
-
-        // 获取评论信息
-        Comment comment = commentMapper.selectById(commentId);
-        if (comment == null) {
-            log.error("评论不存在，无法创建删除通知，评论ID：{}", commentId);
-            return;
-        }
-
-        // 获取评论内容（截取前20个字）
-        String commentPreview = comment.getContent();
-        if (commentPreview.length() > 20) {
-            commentPreview = commentPreview.substring(0, 20) + "...";
-        }
-
-        String content = "你的评论「" + commentPreview + "」已被管理员删除";
-        if (reason != null && !reason.isEmpty()) {
-            content += "，原因：" + reason;
-        }
-
-        // 存储话题ID而不是评论ID，方便前端跳转
-        Long topicId = comment.getTopicId();
-
-        Notification notification = new Notification();
-        notification.setUserId(commentAuthorId);
-        notification.setType("delete_comment");
-        notification.setRelatedId(topicId);  // 存储话题ID
-        notification.setContent(content);
-        notification.setIsRead(0);
-        notification.setCreateTime(LocalDateTime.now());
-
-        notificationMapper.insert(notification);
-        log.info("评论删除通知创建成功，话题ID：{}", topicId);
-    }
-
     /**
      * 转换为VO
      */

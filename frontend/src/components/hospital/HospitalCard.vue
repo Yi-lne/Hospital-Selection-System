@@ -5,6 +5,9 @@
       <div class="hospital-info">
         <h3 class="hospital-name">{{ hospital.name }}</h3>
         <div class="hospital-tags">
+          <el-tag v-if="hospital.isMedicalInsurance" size="small" type="success">
+            医保定点
+          </el-tag>
           <el-tag size="small" type="danger">{{ displayLevel }}</el-tag>
           <el-tag v-if="sortPriority === 'rating' && hospital.rating" size="small" type="warning">
             评分：{{ hospital.rating.toFixed(1) }}

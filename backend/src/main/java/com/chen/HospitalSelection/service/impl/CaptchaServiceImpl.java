@@ -105,19 +105,6 @@ public class CaptchaServiceImpl implements CaptchaService {
     }
 
     @Override
-    public boolean verifyAndConsumeCaptcha(CaptchaVerifyDTO dto) {
-        boolean valid = verifyCaptcha(dto);
-
-        if (valid) {
-            // 验证成功后删除验证码，防止重复使用
-            captchaStore.remove(dto.getCaptchaId());
-            log.info("验证码已消耗，ID：{}", dto.getCaptchaId());
-        }
-
-        return valid;
-    }
-
-    @Override
     public void deleteCaptcha(String captchaId) {
         captchaStore.remove(captchaId);
         log.info("删除验证码，ID：{}", captchaId);

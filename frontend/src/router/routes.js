@@ -129,25 +129,6 @@ export const routes = [
         component: () => import('@/views/user/Notifications.vue'),
         meta: { title: '互动通知', requiresAuth: true }
       },
-      // 消息相关
-      {
-        path: '/message',
-        name: 'Message',
-        redirect: '/message/conversations',
-        meta: { requiresAuth: true }
-      },
-      {
-        path: '/message/conversations',
-        name: 'ConversationList',
-        component: () => import('@/views/message/ConversationList.vue'),
-        meta: { title: '私信列表', requiresAuth: true }
-      },
-      {
-        path: '/message/chat/:userId?',
-        name: 'Chat',
-        component: () => import('@/views/message/Chat.vue'),
-        meta: { title: '聊天', requiresAuth: true }
-      },
       // 管理员相关
       {
         path: '/admin/hospital',

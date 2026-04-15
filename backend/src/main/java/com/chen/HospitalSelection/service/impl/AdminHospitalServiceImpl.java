@@ -8,6 +8,7 @@ import com.chen.HospitalSelection.dto.HospitalUpdateDTO;
 import com.chen.HospitalSelection.dto.PageQueryDTO;
 import com.chen.HospitalSelection.exception.BusinessException;
 import com.chen.HospitalSelection.exception.ParameterException;
+import com.chen.HospitalSelection.mapper.CollectionMapper;
 import com.chen.HospitalSelection.mapper.DepartmentMapper;
 import com.chen.HospitalSelection.mapper.DoctorMapper;
 import com.chen.HospitalSelection.mapper.HospitalMapper;
@@ -54,6 +55,9 @@ public class AdminHospitalServiceImpl implements AdminHospitalService {
     @Autowired
     private DoctorMapper doctorMapper;
 
+    @Autowired
+    private CollectionMapper collectionMapper;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public HospitalVO createHospital(HospitalCreateDTO dto) {
@@ -69,7 +73,6 @@ public class AdminHospitalServiceImpl implements AdminHospitalService {
         Hospital hospital = new Hospital();
         BeanUtils.copyProperties(dto, hospital, getNullPropertyNames(dto));
         hospital.setIsDeleted(0);
-        hospital.setReviewCount(0);
         if (hospital.getRating() == null) {
             hospital.setRating(BigDecimal.ZERO);
         }
@@ -126,17 +129,25 @@ public class AdminHospitalServiceImpl implements AdminHospitalService {
             throw new BusinessException("医院已被删除");
         }
 
-        // 2. 级联逻辑删除该医院下的所有医生
+        // 2. 级联逻辑删除该医院下的所有医生和科室
         List<Department> departments = departmentMapper.selectByHospitalId(id);
         int doctorCount = 0;
         for (Department dept : departments) {
+            // 删除该科室下所有医生的收藏
+            doctorMapper.selectByDeptId(dept.getId()).forEach(doctor -> {
+                collectionMapper.deleteByDoctorId(doctor.getId());
+            });
+            // 删除医生
             int count = doctorMapper.deleteByDeptId(dept.getId());
             doctorCount += count;
             // 逻辑删除科室
             departmentMapper.deleteById(dept.getId());
         }
 
-        // 3. 逻辑删除医院
+        // 3. 删除医院的收藏（target_type=1 表示医院）
+        collectionMapper.deleteByHospitalId(id);
+
+        // 4. 逻辑删除医院
         hospital.setIsDeleted(1);
         hospital.setUpdateTime(LocalDateTime.now());
         hospitalMapper.updateById(hospital);
@@ -191,19 +202,6 @@ public class AdminHospitalServiceImpl implements AdminHospitalService {
     }
 
     @Override
-    public List<HospitalVO> searchHospitals(String keyword) {
-        log.info("管理员搜索医院，关键词：{}", keyword);
-
-        List<Hospital> hospitalList = hospitalMapper.searchByKeyword(keyword);
-        List<HospitalVO> hospitalVOList = new ArrayList<>();
-        for (Hospital hospital : hospitalList) {
-            hospitalVOList.add(convertToVO(hospital));
-        }
-
-        return hospitalVOList;
-    }
-
-    @Override
     public List<HospitalVO> searchHospitals(String keyword, Boolean includeDeleted) {
         log.info("管理员搜索医院，关键词：{}，包含已删除：{}", keyword, includeDeleted);
 
@@ -255,49 +253,6 @@ public class AdminHospitalServiceImpl implements AdminHospitalService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public int batchCreateDepartments(Long hospitalId, List<String> deptNames) {
-        log.info("管理员批量添加科室，医院ID：{}，数量：{}", hospitalId, deptNames.size());
-
-        // 1. 检查医院是否存在
-        Hospital hospital = hospitalMapper.selectById(hospitalId);
-        if (hospital == null || hospital.getIsDeleted() == 1) {
-            throw new BusinessException("医院不存在或已删除");
-        }
-
-        int successCount = 0;
-        for (String deptName : deptNames) {
-            if (deptName == null || deptName.trim().isEmpty()) {
-                continue;
-            }
-
-            // 检查是否已存在
-            Department existDept = departmentMapper.selectByHospitalAndName(hospitalId, deptName.trim());
-            if (existDept != null) {
-                log.warn("科室已存在，跳过：{}", deptName);
-                continue;
-            }
-
-            Department department = new Department();
-            department.setHospitalId(hospitalId);
-            department.setDeptName(deptName.trim());
-            department.setIsDeleted(0);
-            department.setCreateTime(LocalDateTime.now());
-            department.setUpdateTime(LocalDateTime.now());
-
-            try {
-                departmentMapper.insert(department);
-                successCount++;
-            } catch (Exception e) {
-                log.error("添加科室失败：{}", deptName, e);
-            }
-        }
-
-        log.info("批量添加科室完成，成功：{}/{}", successCount, deptNames.size());
-        return successCount;
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
     public void updateDepartment(Long deptId, DepartmentUpdateDTO dto) {
         log.info("管理员更新科室信息，ID：{}", deptId);
 
@@ -338,7 +293,12 @@ public class AdminHospitalServiceImpl implements AdminHospitalService {
             throw new BusinessException("科室不存在");
         }
 
-        // 先删除该科室下的所有医生
+        // 删除该科室下所有医生的收藏
+        doctorMapper.selectByDeptId(deptId).forEach(doctor -> {
+            collectionMapper.deleteByDoctorId(doctor.getId());
+        });
+
+        // 删除该科室下的所有医生
         int doctorCount = doctorMapper.deleteByDeptId(deptId);
 
         // 删除科室
@@ -374,7 +334,6 @@ public class AdminHospitalServiceImpl implements AdminHospitalService {
         Doctor doctor = new Doctor();
         BeanUtils.copyProperties(dto, doctor);
         doctor.setIsDeleted(0);
-        doctor.setReviewCount(0);
         if (doctor.getRating() == null) {
             doctor.setRating(BigDecimal.ZERO);
         }
@@ -388,32 +347,6 @@ public class AdminHospitalServiceImpl implements AdminHospitalService {
     }
 
     @Override
-    public Map<String, Object> importDoctors(MultipartFile file) {
-        log.info("管理员批量导入医生，文件名：{}", file.getOriginalFilename());
-
-        Map<String, Object> result = new HashMap<>();
-        int successCount = 0;
-        int failCount = 0;
-        List<String> errors = new ArrayList<>();
-
-        // TODO: 实现Excel解析逻辑
-        // 1. 使用Apache POI或EasyExcel解析Excel文件
-        // 2. 验证数据格式
-        // 3. 批量插入医生信息
-        // 4. 记录成功和失败的数量
-
-        result.put("total", 0);
-        result.put("successCount", successCount);
-        result.put("failCount", failCount);
-        result.put("errors", errors);
-
-        log.info("批量导入医生完成，总数：{}，成功：{}，失败：{}",
-                result.get("total"), successCount, failCount);
-
-        return result;
-    }
-
-    @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteDoctor(Long doctorId) {
         log.info("管理员删除医生，ID：{}", doctorId);
@@ -423,6 +356,10 @@ public class AdminHospitalServiceImpl implements AdminHospitalService {
             throw new BusinessException("医生不存在");
         }
 
+        // 删除医生的收藏（target_type=2 表示医生）
+        collectionMapper.deleteByDoctorId(doctorId);
+
+        // 删除医生
         doctorMapper.deleteById(doctorId);
 
         log.info("医生删除成功，ID：{}", doctorId);
@@ -467,9 +404,6 @@ public class AdminHospitalServiceImpl implements AdminHospitalService {
         doctor.setConsultationFee(dto.getConsultationFee());
         if (dto.getRating() != null) {
             doctor.setRating(dto.getRating());
-        }
-        if (dto.getReviewCount() != null) {
-            doctor.setReviewCount(dto.getReviewCount());
         }
         doctor.setUpdateTime(LocalDateTime.now());
 

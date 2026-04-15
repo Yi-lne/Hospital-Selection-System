@@ -36,9 +36,4 @@ public class Disease {
      * 排序权重（值越大越靠前）
      */
     private Integer sort;
-
-    /**
-     * 逻辑删除（0=未删，1=已删）
-     */
-    private Integer isDeleted;
 }

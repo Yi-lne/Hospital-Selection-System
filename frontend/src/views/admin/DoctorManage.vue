@@ -61,7 +61,6 @@
             {{ row.rating || '0' }}分
           </template>
         </el-table-column>
-        <el-table-column prop="reviewCount" label="评价数" width="100" />
         <el-table-column prop="isDeleted" label="状态" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="row.isDeleted ? 'danger' : 'success'">

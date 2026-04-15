@@ -48,12 +48,6 @@ public interface CommentMapper {
     List<Comment> selectByUserId(@Param("userId") Long userId);
 
     /**
-     * 查询所有评论
-     * @return 评论列表
-     */
-    List<Comment> selectAll();
-
-    /**
      * 插入评论
      * @param comment 评论对象
      * @return 影响行数
@@ -101,31 +95,4 @@ public interface CommentMapper {
      * @return 影响行数
      */
     int batchDelete(@Param("ids") List<Long> ids);
-
-    /**
-     * 统计评论数量
-     * @return 评论总数
-     */
-    int count();
-
-    /**
-     * 统计话题的评论数量
-     * @param topicId 话题ID
-     * @return 评论数量
-     */
-    int countByTopicId(@Param("topicId") Long topicId);
-
-    /**
-     * 统计用户发表的评论数量
-     * @param userId 用户ID
-     * @return 评论数量
-     */
-    int countByUserId(@Param("userId") Long userId);
-
-    /**
-     * 统计回复数量（根据父评论ID）
-     * @param parentId 父评论ID
-     * @return 回复数量
-     */
-    int countByParentId(@Param("parentId") Long parentId);
 }

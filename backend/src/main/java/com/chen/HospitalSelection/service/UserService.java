@@ -1,12 +1,9 @@
 package com.chen.HospitalSelection.service;
 
-import com.chen.HospitalSelection.dto.PageQueryDTO;
-import com.chen.HospitalSelection.dto.PasswordResetDTO;
 import com.chen.HospitalSelection.dto.PasswordUpdateDTO;
 import com.chen.HospitalSelection.dto.UserLoginDTO;
 import com.chen.HospitalSelection.dto.UserRegisterDTO;
 import com.chen.HospitalSelection.dto.UserUpdateDTO;
-import com.chen.HospitalSelection.vo.PageResult;
 import com.chen.HospitalSelection.vo.UserVO;
 import com.chen.HospitalSelection.vo.UserProfileVO;
 
@@ -38,14 +35,6 @@ public interface UserService {
     UserVO login(UserLoginDTO dto);
 
     /**
-     * 根据用户ID获取用户信息
-     *
-     * @param userId 用户ID
-     * @return 用户基本信息
-     */
-    UserVO getUserInfo(Long userId);
-
-    /**
      * 获取用户完整资料
      *
      * @param userId 用户ID
@@ -70,30 +59,6 @@ public interface UserService {
      * @throws RuntimeException 当原密码错误时抛出异常
      */
     void updatePassword(Long userId, PasswordUpdateDTO dto);
-
-    /**
-     * 找回密码（通过手机验证码重置密码）
-     *
-     * @param dto 找回密码信息（手机号、验证码、新密码）
-     * @throws RuntimeException 当手机号不存在或验证码错误时抛出异常
-     */
-    void resetPassword(PasswordResetDTO dto);
-
-    /**
-     * 分页查询用户列表（管理员功能）
-     *
-     * @param dto 分页查询参数
-     * @return 用户分页列表
-     */
-    PageResult<UserVO> getUserList(PageQueryDTO dto);
-
-    /**
-     * 启用/禁用用户（管理员功能）
-     *
-     * @param userId 用户ID
-     * @param status 状态（1=启用，0=禁用）
-     */
-    void updateUserStatus(Long userId, Integer status);
 
     /**
      * 上传用户头像

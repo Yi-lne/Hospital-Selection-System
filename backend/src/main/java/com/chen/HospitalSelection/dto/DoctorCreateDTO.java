@@ -78,10 +78,4 @@ public class DoctorCreateDTO implements Serializable {
      */
     @Schema(description = "患者评分", example = "4.8")
     private BigDecimal rating;
-
-    /**
-     * 评价数量
-     */
-    @Schema(description = "评价数量", example = "50")
-    private Integer reviewCount;
 }

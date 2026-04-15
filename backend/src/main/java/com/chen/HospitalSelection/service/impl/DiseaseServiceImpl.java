@@ -54,72 +54,13 @@ public class DiseaseServiceImpl implements DiseaseService {
 
     @Override
     public List<DiseaseVO> getLevel1Diseases() {
-        log.info("获取所有一级分类");
-
-        List<Disease> level1List = diseaseMapper.selectLevel1();
-
-        return level1List.stream()
-                .map(this::convertToVO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<DiseaseVO> getLevel2Diseases(Long parentId) {
-        log.info("获取二级分类，父ID：{}", parentId);
-
-        List<Disease> level2List = diseaseMapper.selectByParentId(parentId);
-
-        return level2List.stream()
-                .map(this::convertToVO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public DiseaseVO getDiseaseByCode(String diseaseCode) {
-        log.info("根据编码查询疾病，编码：{}", diseaseCode);
-
-        Disease disease = diseaseMapper.selectByCode(diseaseCode);
-        if (disease == null) {
-            throw new BusinessException("疾病分类不存在");
-        }
-
-        return convertToVO(disease);
-    }
-
-    @Override
-    public List<DiseaseVO> searchDiseasesByName(String diseaseName) {
-        log.info("搜索疾病，疾病名称：{}", diseaseName);
-
-        List<Disease> diseaseList = diseaseMapper.searchByName(diseaseName);
-
-        return diseaseList.stream()
-                .map(this::convertToVO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public String getDiseasePath(Long diseaseId) {
-        log.info("获取疾病路径，疾病ID：{}", diseaseId);
-
-        Disease disease = diseaseMapper.selectById(diseaseId);
-        if (disease == null) {
-            throw new BusinessException("疾病分类不存在");
-        }
-
-        StringBuilder path = new StringBuilder(disease.getDiseaseName());
-
-        // 如果是一级分类，直接返回
-        if (disease.getParentId() == 0) {
-            return path.toString();
-        }
-
-        // 递归查询父级分类
-        Disease parent = diseaseMapper.selectById(disease.getParentId());
-        if (parent != null) {
-            path.insert(0, parent.getDiseaseName() + " > ");
-        }
-
-        return path.toString();
+    log.info("获取一级疾病分类");
+    // 查询所有一级分类（parent_id = 0）
+    List<Disease> level1List = diseaseMapper.selectLevel1();
+    // 转换为 VO
+    return level1List.stream()
+        .map(this::convertToVO)
+        .collect(Collectors.toList());
     }
 
     /**

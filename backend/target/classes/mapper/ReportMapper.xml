@@ -76,8 +76,8 @@
             hu.nickname AS handler_name,
             r.create_time
         FROM community_report r
-        LEFT JOIN sys_user u ON r.user_id = u.id AND u.is_deleted = 0
-        LEFT JOIN sys_user hu ON r.handler_id = hu.id AND hu.is_deleted = 0
+        LEFT JOIN sys_user u ON r.user_id = u.id
+        LEFT JOIN sys_user hu ON r.handler_id = hu.id
         LEFT JOIN community_topic t ON r.target_type = 1 AND r.target_id = t.id
         LEFT JOIN community_comment c ON r.target_type = 2 AND r.target_id = c.id
         <where>
@@ -126,6 +126,18 @@
 
     <delete id="deleteById">
         DELETE FROM community_report WHERE id = #{id}
+    </delete>
+
+    <!-- 删除话题的所有举报记录（级联删除用） -->
+    <delete id="deleteByTopicId">
+        DELETE FROM community_report
+        WHERE target_type = 1 AND target_id = #{topicId}
+    </delete>
+
+    <!-- 删除评论的所有举报记录（级联删除用） -->
+    <delete id="deleteByCommentId">
+        DELETE FROM community_report
+        WHERE target_type = 2 AND target_id = #{commentId}
     </delete>
 
 </mapper>

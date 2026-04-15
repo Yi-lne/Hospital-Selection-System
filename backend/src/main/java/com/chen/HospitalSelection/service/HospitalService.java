@@ -70,32 +70,6 @@ public interface HospitalService {
     PageResult<HospitalSimpleVO> searchHospitals(String keyword, PageQueryDTO dto);
 
     /**
-     * 获取搜索建议（自动补全）
-     *
-     * @param keyword 搜索关键词
-     * @return 建议列表（医院名称）
-     */
-    List<String> getSearchSuggestions(String keyword);
-
-    /**
-     * 根据地区获取医院列表
-     *
-     * @param cityCode 城市编码
-     * @param dto      分页查询参数
-     * @return 医院列表
-     */
-    PageResult<HospitalSimpleVO> getHospitalsByCity(String cityCode, PageQueryDTO dto);
-
-    /**
-     * 根据等级获取医院列表
-     *
-     * @param level 医院等级（如：grade3A）
-     * @param dto   分页查询参数
-     * @return 医院列表
-     */
-    PageResult<HospitalSimpleVO> getHospitalsByLevel(String level, PageQueryDTO dto);
-
-    /**
      * AI智能推荐医院
      * 使用AI解析用户自然语言查询，返回匹配的医院列表
      *

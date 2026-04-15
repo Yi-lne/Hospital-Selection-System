@@ -27,7 +27,12 @@
       <!-- 话题列表 -->
       <div v-loading="loading" class="topic-list">
         <template v-if="topicList.length > 0">
-          <TopicCard v-for="topic in topicList" :key="topic.id" :topic="topic" />
+        <TopicCard
+          v-for="topic in topicList"
+          :key="topic.id"
+          :topic="topic"
+          @collection-change="loadTopics"
+        />
         </template>
         <Empty v-else description="暂无话题，快来发布第一条吧！" />
 

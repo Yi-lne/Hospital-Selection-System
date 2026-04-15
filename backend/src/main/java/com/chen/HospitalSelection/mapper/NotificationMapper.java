@@ -21,13 +21,6 @@ public interface NotificationMapper {
     List<Notification> selectByUserId(@Param("userId") Long userId);
 
     /**
-     * 根据用户ID查询未读通知列表
-     * @param userId 用户ID
-     * @return 未读通知列表
-     */
-    List<Notification> selectUnreadByUserId(@Param("userId") Long userId);
-
-    /**
      * 统计未读通知数量
      * @param userId 用户ID
      * @return 未读通知数量
@@ -68,11 +61,4 @@ public interface NotificationMapper {
      * @return 影响行数
      */
     int deleteAllReadByUserId(@Param("userId") Long userId);
-
-    /**
-     * 根据ID查询通知
-     * @param id 通知ID
-     * @return 通知对象
-     */
-    Notification selectById(@Param("id") Long id);
 }

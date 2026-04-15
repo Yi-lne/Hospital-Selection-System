@@ -278,6 +278,7 @@ const loadHospitals = async () => {
       city: item.cityName || item.city,
       address: item.address,
       rating: item.rating,
+      isMedicalInsurance: item.isMedicalInsurance,
       // 不设置avatar，让组件使用默认头像
       avatar: null
     }))

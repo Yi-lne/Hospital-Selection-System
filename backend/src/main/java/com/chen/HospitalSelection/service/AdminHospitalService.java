@@ -62,14 +62,6 @@ public interface AdminHospitalService {
     PageResult<HospitalVO> getAllHospitals(Boolean includeDeleted, PageQueryDTO dto);
 
     /**
-     * 根据名称搜索医院
-     *
-     * @param keyword 医院名称关键词
-     * @return 医院列表
-     */
-    List<HospitalVO> searchHospitals(String keyword);
-
-    /**
      * 根据名称搜索医院（可选择是否包含已删除）
      *
      * @param keyword 医院名称关键词
@@ -85,15 +77,6 @@ public interface AdminHospitalService {
      * @return 科室ID
      */
     Long createDepartment(DepartmentCreateDTO dto);
-
-    /**
-     * 批量添加科室
-     *
-     * @param hospitalId 医院ID
-     * @param deptNames 科室名称列表
-     * @return 添加成功的科室数量
-     */
-    int batchCreateDepartments(Long hospitalId, List<String> deptNames);
 
     /**
      * 更新科室信息
@@ -117,14 +100,6 @@ public interface AdminHospitalService {
      * @return 医生ID
      */
     Long createDoctor(DoctorCreateDTO dto);
-
-    /**
-     * 批量导入医生
-     *
-     * @param file Excel文件
-     * @return 导入结果统计
-     */
-    Map<String, Object> importDoctors(MultipartFile file);
 
     /**
      * 删除医生

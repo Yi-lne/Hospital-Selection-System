@@ -45,22 +45,6 @@ public class MedicalHistoryServiceImpl implements MedicalHistoryService {
     }
 
     @Override
-    public PageResult<MedicalHistoryVO> getMedicalHistoryPage(Long userId, PageQueryDTO dto) {
-        log.info("分页查询病史列表，用户ID：{}", userId);
-
-        // 使用PageHelper进行物理分页
-        PageHelper.startPage(dto.getPage(), dto.getPageSize());
-        List<MedicalHistory> historyList = medicalHistoryMapper.selectByUserId(userId);
-        PageInfo<MedicalHistory> pageInfo = new PageInfo<>(historyList);
-
-        List<MedicalHistoryVO> voList = historyList.stream()
-                .map(this::convertToVO)
-                .collect(Collectors.toList());
-
-        return new PageResult<>(pageInfo.getTotal(), dto.getPage(), dto.getPageSize(), voList);
-    }
-
-    @Override
     public MedicalHistoryVO getMedicalHistoryDetail(Long historyId, Long userId) {
         log.info("查询病史详情，病史ID：{}，用户ID：{}", historyId, userId);
 
@@ -136,39 +120,6 @@ public class MedicalHistoryServiceImpl implements MedicalHistoryService {
         medicalHistoryMapper.deleteById(historyId);
 
         log.info("病史记录删除成功，病史ID：{}", historyId);
-    }
-
-    @Override
-    public List<MedicalHistoryVO> searchByDiseaseName(Long userId, String diseaseName) {
-        log.info("根据疾病名称查询病史，用户ID：{}，疾病名称：{}", userId, diseaseName);
-
-        List<MedicalHistory> historyList = medicalHistoryMapper.selectByUserIdAndDisease(userId, diseaseName);
-
-        return historyList.stream()
-                .map(this::convertToVO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<MedicalHistoryVO> searchByStatus(Long userId, Integer status) {
-        log.info("根据状态查询病史，用户ID：{}，状态：{}", userId, status);
-
-        List<MedicalHistory> historyList = medicalHistoryMapper.selectByUserIdAndStatus(userId, status);
-
-        return historyList.stream()
-                .map(this::convertToVO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<MedicalHistoryVO> getActiveDiseases(Long userId) {
-        log.info("获取正在治疗的疾病列表，用户ID：{}", userId);
-
-        List<MedicalHistory> historyList = medicalHistoryMapper.selectByUserIdAndStatus(userId, 1); // 1=治疗中
-
-        return historyList.stream()
-                .map(this::convertToVO)
-                .collect(Collectors.toList());
     }
 
     /**

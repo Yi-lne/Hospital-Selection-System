@@ -54,47 +54,4 @@ public interface CollectionService {
      */
     boolean checkCollection(Long userId, Integer targetType, Long targetId);
 
-    /**
-     * 获取收藏数量统计
-     *
-     * @param userId 用户ID
-     * @return 各类型收藏数量（key=类型，value=数量）
-     */
-    Map<Integer, Long> getCollectionCount(Long userId);
-
-    /**
-     * 切换收藏状态（已收藏则取消，未收藏则添加）
-     *
-     * @param userId 用户ID
-     * @param dto    收藏信息
-     * @return true=收藏成功，false=取消收藏
-     */
-    boolean toggleCollection(Long userId, CollectionDTO dto);
-
-    /**
-     * 获取医院收藏列表
-     *
-     * @param userId 用户ID
-     * @param dto    分页查询参数
-     * @return 医院收藏列表
-     */
-    PageResult<CollectionVO> getHospitalCollections(Long userId, PageQueryDTO dto);
-
-    /**
-     * 获取医生收藏列表
-     *
-     * @param userId 用户ID
-     * @param dto    分页查询参数
-     * @return 医生收藏列表
-     */
-    PageResult<CollectionVO> getDoctorCollections(Long userId, PageQueryDTO dto);
-
-    /**
-     * 获取话题收藏列表
-     *
-     * @param userId 用户ID
-     * @param dto    分页查询参数
-     * @return 话题收藏列表
-     */
-    PageResult<CollectionVO> getTopicCollections(Long userId, PageQueryDTO dto);
 }

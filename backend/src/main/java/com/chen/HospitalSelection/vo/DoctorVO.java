@@ -82,11 +82,6 @@ public class DoctorVO {
     private BigDecimal rating;
 
     /**
-     * 评价数量
-     */
-    private Integer reviewCount;
-
-    /**
      * 是否已收藏（需要登录时返回）
      */
     private Boolean isCollected;

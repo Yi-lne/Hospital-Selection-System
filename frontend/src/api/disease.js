@@ -8,24 +8,8 @@ export function getDiseaseTree() {
 }
 
 /**
- * 获取一级分类
- */
-export function getLevel1Categories() {
+  * 获取疾病分类树（一级分类）
+  */
+export function getLevel1Diseases() {
   return Request.get('/disease/level1')
-}
-
-/**
- * 获取二级分类
- */
-export function getLevel2Categories(parentId) {
-  return Request.get(`/disease/level2/${parentId}`)
-}
-
-/**
- * 根据名称搜索疾病
- */
-export function searchDiseases(keyword) {
-  return Request.get('/disease/search', {
-    params: { keyword }
-  })
 }

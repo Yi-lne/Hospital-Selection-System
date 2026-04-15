@@ -136,7 +136,6 @@ const loadCollection = async () => {
             scheduleTime: item.doctor.scheduleTime || '暂无',
             consultationFee: item.doctor.consultationFee || 0,
             rating: item.doctor.rating || 0,
-            reviewCount: item.doctor.reviewCount || 0,
             avatar: item.doctor.avatar || ''
           })
         }

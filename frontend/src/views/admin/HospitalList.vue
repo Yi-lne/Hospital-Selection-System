@@ -43,7 +43,12 @@
       </el-table-column>
       <el-table-column prop="address" label="地址" min-width="200" />
       <el-table-column prop="phone" label="电话" width="150" />
-      <el-table-column prop="reviewCount" label="评价数" width="100" align="center" />
+      <el-table-column prop="isMedicalInsurance" label="医保定点" width="100" align="center">
+        <template #default="{ row }">
+        <el-tag v-if="row.isMedicalInsurance" type="success">医保</el-tag>
+          <span v-else style="color: #999">非医保</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="isDeleted" label="状态" width="100" align="center">
         <template #default="{ row }">
           <el-tag :type="row.isDeleted ? 'danger' : 'success'">

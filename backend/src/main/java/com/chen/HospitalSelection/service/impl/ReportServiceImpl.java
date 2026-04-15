@@ -150,54 +150,6 @@ public class ReportServiceImpl implements ReportService {
     }
 
     /**
-     * 转换为VO
-     */
-    private ReportVO convertToVO(Report report) {
-        ReportVO vo = new ReportVO();
-        vo.setId(report.getId());
-        vo.setUserId(report.getUserId());
-        vo.setTargetType(report.getTargetType());
-        vo.setTargetId(report.getTargetId());
-        vo.setReasonType(report.getReasonType());
-        vo.setReasonTypeDesc(getReasonTypeDesc(report.getReasonType()));
-        vo.setReason(report.getReason());
-        vo.setStatus(report.getStatus());
-        vo.setStatusDesc(getStatusDesc(report.getStatus()));
-        vo.setHandleResult(report.getHandleResult());
-        vo.setCreateTime(report.getCreateTime());
-
-        // 获取举报者信息
-        User user = userMapper.selectById(report.getUserId());
-        if (user != null) {
-            vo.setNickname(user.getNickname());
-            vo.setAvatar(user.getAvatar());
-        }
-
-        // 获取举报对象信息
-        if (report.getTargetType() == 1) {
-            vo.setTargetTypeName("话题");
-            Topic topic = topicMapper.selectById(report.getTargetId());
-            if (topic != null) {
-                vo.setTargetTitle(topic.getTitle());
-                vo.setTopicId(topic.getId());  // 话题类型，topicId 就是 targetId
-            }
-        } else if (report.getTargetType() == 2) {
-            vo.setTargetTypeName("评论");
-            Comment comment = commentMapper.selectById(report.getTargetId());
-            if (comment != null) {
-                String content = comment.getContent();
-                if (content != null && content.length() > 50) {
-                    content = content.substring(0, 50) + "...";
-                }
-                vo.setTargetTitle(content);
-                vo.setTopicId(comment.getTopicId());  // 评论类型，获取所属话题ID
-            }
-        }
-
-        return vo;
-    }
-
-    /**
      * 获取举报原因描述
      */
     private String getReasonTypeDesc(String reasonType) {

@@ -90,10 +90,13 @@ public class CollectionServiceImpl implements CollectionService {
 
         // 如果是收藏话题，创建通知给话题作者（不给自己发通知）
         if (dto.getTargetType() == 3) {
+            // 更新话题的收藏数
+            topicMapper.incrementCollectCount(dto.getTargetId());
             Topic topic = topicMapper.selectById(dto.getTargetId());
             if (topic != null && !topic.getUserId().equals(userId)) {
                 User collector = userMapper.selectById(userId);
                 notificationService.createCollectNotification(dto.getTargetId(), topic.getUserId(), collector.getNickname());
+
             }
         }
 
@@ -110,7 +113,10 @@ public class CollectionServiceImpl implements CollectionService {
         if (count == 0) {
             throw new BusinessException("400", "未收藏该项目");
         }
-
+        // 如果是取消收藏话题，更新话题的收藏数
+        if (dto.getTargetType() == 3) {
+            topicMapper.decrementCollectCount(dto.getTargetId());
+        }
         collectionMapper.cancelCollection(userId, dto.getTargetType(), dto.getTargetId());
 
         log.info("收藏取消成功");
@@ -162,59 +168,6 @@ public class CollectionServiceImpl implements CollectionService {
         return count > 0;
     }
 
-    @Override
-    public Map<Integer, Long> getCollectionCount(Long userId) {
-        log.info("获取收藏数量统计，用户ID：{}", userId);
-
-        Map<Integer, Long> countMap = new HashMap<>();
-
-        // 统计各类型收藏数量（简化实现：查询所有后在内存中统计）
-        List<UserCollectionItem> allCollections = collectionMapper.selectByUserId(userId);
-
-        long hospitalCount = allCollections.stream().filter(c -> c.getTargetType() == 1).count();
-        countMap.put(1, hospitalCount);
-
-        long doctorCount = allCollections.stream().filter(c -> c.getTargetType() == 2).count();
-        countMap.put(2, doctorCount);
-
-        long topicCount = allCollections.stream().filter(c -> c.getTargetType() == 3).count();
-        countMap.put(3, topicCount);
-
-        return countMap;
-    }
-
-    @Override
-    @Transactional
-    public boolean toggleCollection(Long userId, CollectionDTO dto) {
-        log.info("切换收藏状态，用户ID：{}，目标类型：{}，目标ID：{}", userId, dto.getTargetType(), dto.getTargetId());
-
-        int count = collectionMapper.countByUserAndTarget(userId, dto.getTargetType(), dto.getTargetId());
-        if (count > 0) {
-            // 已收藏，取消收藏
-            cancelCollection(userId, dto);
-            return false;
-        } else {
-            // 未收藏，添加收藏
-            addCollection(userId, dto);
-            return true;
-        }
-    }
-
-    @Override
-    public PageResult<CollectionVO> getHospitalCollections(Long userId, PageQueryDTO dto) {
-        return getCollectionList(userId, 1, dto);
-    }
-
-    @Override
-    public PageResult<CollectionVO> getDoctorCollections(Long userId, PageQueryDTO dto) {
-        return getCollectionList(userId, 2, dto);
-    }
-
-    @Override
-    public PageResult<CollectionVO> getTopicCollections(Long userId, PageQueryDTO dto) {
-        return getCollectionList(userId, 3, dto);
-    }
-
     /**
      * 转换为收藏VO
      */
@@ -237,7 +190,6 @@ public class CollectionServiceImpl implements CollectionService {
                 hospitalVO.setAddress(hospital.getAddress());
                 hospitalVO.setPhone(hospital.getPhone());
                 hospitalVO.setRating(hospital.getRating());
-                hospitalVO.setReviewCount(hospital.getReviewCount());
                 hospitalVO.setIsMedicalInsurance(hospital.getIsMedicalInsurance());
                 hospitalVO.setKeyDepartments(hospital.getKeyDepartments());
                 vo.setHospital(hospitalVO);
@@ -263,7 +215,6 @@ public class CollectionServiceImpl implements CollectionService {
                 doctorVO.setScheduleTime(doctor.getScheduleTime());
                 doctorVO.setConsultationFee(doctor.getConsultationFee());
                 doctorVO.setRating(doctor.getRating());
-                doctorVO.setReviewCount(doctor.getReviewCount());
                 vo.setDoctor(doctorVO);
             }
         } else if (collection.getTargetType() == 3) {
@@ -275,8 +226,7 @@ public class CollectionServiceImpl implements CollectionService {
                 topicVO.setUserId(topic.getUserId());
                 topicVO.setTitle(topic.getTitle());
                 topicVO.setDiseaseCode(topic.getDiseaseCode());
-                topicVO.setBoardLevel1(topic.getBoardLevel1());
-                topicVO.setBoardLevel2(topic.getBoardLevel2());
+                topicVO.setBoardSub(topic.getBoardSub());
                 topicVO.setBoardType(topic.getBoardType());
                 topicVO.setLikeCount(topic.getLikeCount());
                 topicVO.setCommentCount(topic.getCommentCount());

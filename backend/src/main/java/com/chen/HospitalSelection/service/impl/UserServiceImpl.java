@@ -1,8 +1,6 @@
 package com.chen.HospitalSelection.service.impl;
 
 import com.chen.HospitalSelection.dto.CaptchaVerifyDTO;
-import com.chen.HospitalSelection.dto.PageQueryDTO;
-import com.chen.HospitalSelection.dto.PasswordResetDTO;
 import com.chen.HospitalSelection.dto.PasswordUpdateDTO;
 import com.chen.HospitalSelection.dto.UserLoginDTO;
 import com.chen.HospitalSelection.dto.UserRegisterDTO;
@@ -16,11 +14,8 @@ import com.chen.HospitalSelection.service.RoleService;
 import com.chen.HospitalSelection.service.UserService;
 import com.chen.HospitalSelection.util.JwtUtil;
 import com.chen.HospitalSelection.util.PasswordUtil;
-import com.chen.HospitalSelection.vo.PageResult;
 import com.chen.HospitalSelection.vo.UserProfileVO;
 import com.chen.HospitalSelection.vo.UserVO;
-import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,7 +82,6 @@ public class UserServiceImpl implements UserService {
         user.setAvatar(DEFAULT_AVATAR);
         user.setGender(0); // 默认未知
         user.setStatus(1); // 默认正常
-        user.setIsDeleted(0);
         user.setCreateTime(LocalDateTime.now());
         user.setUpdateTime(LocalDateTime.now());
 
@@ -105,7 +99,7 @@ public class UserServiceImpl implements UserService {
     public UserVO login(UserLoginDTO dto) {
         log.info("用户登录，手机号：{}", dto.getPhone());
 
-        // 0. 验证图片验证码（不删除，先验证）
+        // 0. 验证图片验证码（不删除已填写信息，先验证）
         CaptchaVerifyDTO captchaDTO = new CaptchaVerifyDTO();
         captchaDTO.setCaptchaId(dto.getCaptchaId());
         captchaDTO.setMoveX(dto.getMoveX());
@@ -165,15 +159,6 @@ public class UserServiceImpl implements UserService {
 
         log.info("用户登录成功，用户ID：{}", user.getId());
         return userVO;
-    }
-
-    @Override
-    public UserVO getUserInfo(Long userId) {
-        User user = userMapper.selectById(userId);
-        if (user == null) {
-            throw new BusinessException("用户不存在");
-        }
-        return convertToVO(user);
     }
 
     @Override
@@ -249,69 +234,10 @@ public class UserServiceImpl implements UserService {
         // 更新密码
         String newPassword = PasswordUtil.encode(dto.getNewPassword());
         userMapper.updatePassword(userId, newPassword);
-
+        user.setUpdateTime(LocalDateTime.now());
         log.info("密码修改成功，用户ID：{}", userId);
     }
 
-    @Override
-    @Transactional
-    public void resetPassword(PasswordResetDTO dto) {
-        log.info("找回密码，手机号：{}", dto.getPhone());
-
-        // 根据手机号查询用户
-        User user = userMapper.selectByPhone(dto.getPhone());
-        if (user == null) {
-            throw new BusinessException("该手机号未注册");
-        }
-
-        // 验证验证码（这里暂时简化处理，实际应该从Redis或缓存中获取验证码进行验证）
-        // TODO: 实现短信验证码验证逻辑
-        // String cachedCode = smsService.getVerificationCode(dto.getPhone());
-        // if (!dto.getVerificationCode().equals(cachedCode)) {
-        //     throw new BusinessException("验证码错误或已过期");
-        // }
-
-        // 临时方案：验证码为"123456"时通过（仅用于开发测试）
-        if (!"123456".equals(dto.getVerificationCode())) {
-            throw new BusinessException("验证码错误");
-        }
-
-        // 更新密码
-        String newPassword = PasswordUtil.encode(dto.getNewPassword());
-        userMapper.updatePassword(user.getId(), newPassword);
-
-        log.info("密码重置成功，手机号：{}", dto.getPhone());
-    }
-
-    @Override
-    public PageResult<UserVO> getUserList(PageQueryDTO dto) {
-        log.info("分页查询用户列表，页码：{}，每页大小：{}", dto.getPage(), dto.getPageSize());
-
-        // 使用PageHelper进行物理分页
-        PageHelper.startPage(dto.getPage(), dto.getPageSize());
-        List<User> userList = userMapper.selectAll();
-        PageInfo<User> pageInfo = new PageInfo<>(userList);
-
-        // 转换为VO
-        List<UserVO> userVOList = userList.stream()
-                .map(this::convertToVO)
-                .collect(java.util.stream.Collectors.toList());
-
-        return new PageResult<>(pageInfo.getTotal(), dto.getPage(), dto.getPageSize(), userVOList);
-    }
-
-    @Override
-    @Transactional
-    public void updateUserStatus(Long userId, Integer status) {
-        log.info("更新用户状态，用户ID：{}，状态：{}", userId, status);
-
-        User user = userMapper.selectById(userId);
-        if (user == null) {
-            throw new BusinessException("用户不存在");
-        }
-
-        userMapper.updateStatus(userId, status);
-    }
 
     @Override
     @Transactional
@@ -325,7 +251,7 @@ public class UserServiceImpl implements UserService {
 
         userMapper.updateAvatar(userId, avatarUrl);
         user.setAvatar(avatarUrl);
-
+        user.setUpdateTime(LocalDateTime.now());
         return convertToVO(user);
     }
 

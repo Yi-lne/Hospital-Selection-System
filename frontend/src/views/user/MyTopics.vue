@@ -8,7 +8,12 @@
 
     <el-card v-loading="loading" class="list-card">
       <template v-if="topicList.length > 0">
-        <TopicCard v-for="topic in topicList" :key="topic.id" :topic="topic" />
+          <TopicCard
+            v-for="topic in topicList"
+            :key="topic.id"
+            :topic="topic"
+            @collection-change="loadTopics"
+          />
       </template>
       <Empty v-else description="暂无话题，快去发布第一条吧！" />
 
